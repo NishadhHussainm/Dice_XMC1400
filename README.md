@@ -29,11 +29,6 @@ Code that displays the generated number on the 4 LEDs.
  **Rolling the Dice;**
 The result of each simulated dice roll will be displayed by the LEDs.
 
-## Code Structure
-
- `main.c`; Main source code file.
- `random.c`; Functions for generating numbers.
- `led_display.c`; Functions, for controlling LED display.
 
 ## Testing
 
