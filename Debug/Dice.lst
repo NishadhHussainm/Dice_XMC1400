@@ -1,0 +1,3738 @@
+
+Dice.elf:     file format elf32-littlearm
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         00001230  10001000  10001000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .VENEER_Code  00000144  2000000c  10002230  0000800c  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  2 Stack         00000400  20000150  00000000  00000150  2**0
+                  ALLOC
+  3 .data         00000064  20000550  10002374  00008550  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  4 .bss          0000014c  200005b4  00000464  000085b4  2**2
+                  ALLOC
+  5 .no_init      00000004  20003ffc  00003eac  00000150  2**2
+                  ALLOC
+  6 .debug_aranges 00000530  00000000  00000000  000085b8  2**3
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_info   000065da  00000000  00000000  00008ae8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_abbrev 00001530  00000000  00000000  0000f0c2  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_line   00002f74  00000000  00000000  000105f2  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_frame  00001118  00000000  00000000  00013568  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_str    00003d5a  00000000  00000000  00014680  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_loc    0000185e  00000000  00000000  000183da  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 13 .debug_ranges 00000428  00000000  00000000  00019c38  2**3
+                  CONTENTS, READONLY, DEBUGGING
+ 14 .build_attributes 0000048c  00000000  00000000  0001a060  2**0
+                  CONTENTS, READONLY
+
+Disassembly of section .text:
+
+10001000 <__Vectors>:
+10001000:	50 05 00 20 1d 10 00 10 00 00 00 00 9d 10 00 10     P.. ............
+10001010:	00 18 04 00 00 01 00 00 00 00 00 80                 ............
+
+1000101c <Reset_Handler>:
+    .thumb_func 
+    .globl  Reset_Handler
+    .type   Reset_Handler, %function
+Reset_Handler: 
+/* Initialize interrupt veneer */
+	ldr	r1, =eROData
+1000101c:	4911      	ldr	r1, [pc, #68]	; (10001064 <__copy_data+0xe>)
+	ldr	r2, =VeneerStart
+1000101e:	4a12      	ldr	r2, [pc, #72]	; (10001068 <__copy_data+0x12>)
+	ldr	r3, =VeneerEnd
+10001020:	4b12      	ldr	r3, [pc, #72]	; (1000106c <__copy_data+0x16>)
+	bl  __copy_data
+10001022:	f000 f818 	bl	10001056 <__copy_data>
+
+    ldr  r0, =SystemInit
+10001026:	4812      	ldr	r0, [pc, #72]	; (10001070 <__copy_data+0x1a>)
+    blx  r0
+10001028:	4780      	blx	r0
+	
+/* Initialize data */
+	ldr	r1, =DataLoadAddr
+1000102a:	4912      	ldr	r1, [pc, #72]	; (10001074 <__copy_data+0x1e>)
+	ldr	r2, =__data_start
+1000102c:	4a12      	ldr	r2, [pc, #72]	; (10001078 <__copy_data+0x22>)
+	ldr	r3, =__data_end
+1000102e:	4b13      	ldr	r3, [pc, #76]	; (1000107c <__copy_data+0x26>)
+	bl  __copy_data
+10001030:	f000 f811 	bl	10001056 <__copy_data>
+
+/* RAM code */
+	ldr	r1, =__ram_code_load
+10001034:	4912      	ldr	r1, [pc, #72]	; (10001080 <__copy_data+0x2a>)
+	ldr	r2, =__ram_code_start
+10001036:	4a13      	ldr	r2, [pc, #76]	; (10001084 <__copy_data+0x2e>)
+	ldr	r3, =__ram_code_end
+10001038:	4b13      	ldr	r3, [pc, #76]	; (10001088 <__copy_data+0x32>)
+	bl  __copy_data
+1000103a:	f000 f80c 	bl	10001056 <__copy_data>
+ *    __bss_end__: end of the BSS section.
+ *
+ *  Both addresses must be aligned to 4 bytes boundary.
+ */
+#ifndef __SKIP_BSS_CLEAR
+	ldr	r1, =__bss_start
+1000103e:	4913      	ldr	r1, [pc, #76]	; (1000108c <__copy_data+0x36>)
+	ldr	r2, =__bss_end
+10001040:	4a13      	ldr	r2, [pc, #76]	; (10001090 <__copy_data+0x3a>)
+
+	movs	r0, 0
+10001042:	2000      	movs	r0, #0
+
+	subs	r2, r1
+10001044:	1a52      	subs	r2, r2, r1
+	ble	.L_loop3_done
+10001046:	dd02      	ble.n	1000104e <Reset_Handler+0x32>
+
+.L_loop3:
+	subs	r2, #4
+10001048:	3a04      	subs	r2, #4
+	str	r0, [r1, r2]
+1000104a:	5088      	str	r0, [r1, r2]
+	bgt	.L_loop3
+1000104c:	dcfc      	bgt.n	10001048 <Reset_Handler+0x2c>
+.L_loop3_done:
+#endif /* __SKIP_BSS_CLEAR */
+
+#ifndef __SKIP_LIBC_INIT_ARRAY
+    ldr  r0, =__libc_init_array
+1000104e:	4811      	ldr	r0, [pc, #68]	; (10001094 <__copy_data+0x3e>)
+    blx  r0
+10001050:	4780      	blx	r0
+#endif
+
+    ldr  r0, =main
+10001052:	4811      	ldr	r0, [pc, #68]	; (10001098 <__copy_data+0x42>)
+    blx  r0
+10001054:	4780      	blx	r0
+
+10001056 <__copy_data>:
+ *    r3: end of the section to copy to
+ *
+ *  All addresses must be aligned to 4 bytes boundary.
+ *  Uses r0
+ */
+	subs	r3, r2
+10001056:	1a9b      	subs	r3, r3, r2
+	ble	.L_loop_done
+10001058:	dd03      	ble.n	10001062 <__copy_data+0xc>
+
+.L_loop:
+	subs	r3, #4
+1000105a:	3b04      	subs	r3, #4
+	ldr	r0, [r1,r3]
+1000105c:	58c8      	ldr	r0, [r1, r3]
+	str	r0, [r2,r3]
+1000105e:	50d0      	str	r0, [r2, r3]
+	bgt	.L_loop
+10001060:	dcfb      	bgt.n	1000105a <__copy_data+0x4>
+
+.L_loop_done:
+	bx  lr
+10001062:	4770      	bx	lr
+    .thumb_func 
+    .globl  Reset_Handler
+    .type   Reset_Handler, %function
+Reset_Handler: 
+/* Initialize interrupt veneer */
+	ldr	r1, =eROData
+10001064:	10002230 	.word	0x10002230
+	ldr	r2, =VeneerStart
+10001068:	2000000c 	.word	0x2000000c
+	ldr	r3, =VeneerEnd
+1000106c:	20000150 	.word	0x20000150
+	bl  __copy_data
+
+    ldr  r0, =SystemInit
+10001070:	100010a1 	.word	0x100010a1
+    blx  r0
+	
+/* Initialize data */
+	ldr	r1, =DataLoadAddr
+10001074:	10002374 	.word	0x10002374
+	ldr	r2, =__data_start
+10001078:	20000550 	.word	0x20000550
+	ldr	r3, =__data_end
+1000107c:	200005b4 	.word	0x200005b4
+	bl  __copy_data
+
+/* RAM code */
+	ldr	r1, =__ram_code_load
+10001080:	100023d8 	.word	0x100023d8
+	ldr	r2, =__ram_code_start
+10001084:	200005b4 	.word	0x200005b4
+	ldr	r3, =__ram_code_end
+10001088:	200005b4 	.word	0x200005b4
+ *    __bss_end__: end of the BSS section.
+ *
+ *  Both addresses must be aligned to 4 bytes boundary.
+ */
+#ifndef __SKIP_BSS_CLEAR
+	ldr	r1, =__bss_start
+1000108c:	200005b4 	.word	0x200005b4
+	ldr	r2, =__bss_end
+10001090:	20000700 	.word	0x20000700
+	bgt	.L_loop3
+.L_loop3_done:
+#endif /* __SKIP_BSS_CLEAR */
+
+#ifndef __SKIP_LIBC_INIT_ARRAY
+    ldr  r0, =__libc_init_array
+10001094:	10001fdd 	.word	0x10001fdd
+    blx  r0
+#endif
+
+    ldr  r0, =main
+10001098:	10001f2d 	.word	0x10001f2d
+
+1000109c <HardFault_Handler>:
+    
+    .thumb_func
+    .weak Default_handler
+    .type Default_handler, %function
+Default_Handler:
+    b  .
+1000109c:	e7fe      	b.n	1000109c <HardFault_Handler>
+	...
+
+100010a0 <SystemInit>:
+/*******************************************************************************
+ * API IMPLEMENTATION
+ *******************************************************************************/
+
+__WEAK void SystemInit(void)
+{
+100010a0:	b580      	push	{r7, lr}
+100010a2:	af00      	add	r7, sp, #0
+  SystemCoreSetup();
+100010a4:	f000 fe36 	bl	10001d14 <SystemCoreSetup>
+  SystemCoreClockSetup();
+100010a8:	f000 fe82 	bl	10001db0 <SystemCoreClockSetup>
+}
+100010ac:	46bd      	mov	sp, r7
+100010ae:	bd80      	pop	{r7, pc}
+
+100010b0 <SystemCoreClockUpdate>:
+
+  SystemCoreClockUpdate();
+}
+
+__WEAK void SystemCoreClockUpdate(void)
+{
+100010b0:	b580      	push	{r7, lr}
+100010b2:	af00      	add	r7, sp, #0
+  static uint32_t IDIV, FDIV;
+
+  IDIV = ((SCU_CLK->CLKCR) & SCU_CLK_CLKCR_IDIV_Msk) >> SCU_CLK_CLKCR_IDIV_Pos;
+100010b4:	4b2a      	ldr	r3, [pc, #168]	; (10001160 <SystemCoreClockUpdate+0xb0>)
+100010b6:	681a      	ldr	r2, [r3, #0]
+100010b8:	23ff      	movs	r3, #255	; 0xff
+100010ba:	021b      	lsls	r3, r3, #8
+100010bc:	4013      	ands	r3, r2
+100010be:	0a1a      	lsrs	r2, r3, #8
+100010c0:	4b28      	ldr	r3, [pc, #160]	; (10001164 <SystemCoreClockUpdate+0xb4>)
+100010c2:	601a      	str	r2, [r3, #0]
+
+  if (IDIV != 0)
+100010c4:	4b27      	ldr	r3, [pc, #156]	; (10001164 <SystemCoreClockUpdate+0xb4>)
+100010c6:	681b      	ldr	r3, [r3, #0]
+100010c8:	2b00      	cmp	r3, #0
+100010ca:	d037      	beq.n	1000113c <SystemCoreClockUpdate+0x8c>
+  {
+    FDIV = ((SCU_CLK->CLKCR) & SCU_CLK_CLKCR_FDIV_Msk) >> SCU_CLK_CLKCR_FDIV_Pos;
+100010cc:	4b24      	ldr	r3, [pc, #144]	; (10001160 <SystemCoreClockUpdate+0xb0>)
+100010ce:	681b      	ldr	r3, [r3, #0]
+100010d0:	22ff      	movs	r2, #255	; 0xff
+100010d2:	401a      	ands	r2, r3
+100010d4:	4b24      	ldr	r3, [pc, #144]	; (10001168 <SystemCoreClockUpdate+0xb8>)
+100010d6:	601a      	str	r2, [r3, #0]
+    FDIV |= ((SCU_CLK->CLKCR1) & SCU_CLK_CLKCR1_FDIV_Msk) << 8;
+100010d8:	4b21      	ldr	r3, [pc, #132]	; (10001160 <SystemCoreClockUpdate+0xb0>)
+100010da:	69db      	ldr	r3, [r3, #28]
+100010dc:	2203      	movs	r2, #3
+100010de:	4013      	ands	r3, r2
+100010e0:	021a      	lsls	r2, r3, #8
+100010e2:	4b21      	ldr	r3, [pc, #132]	; (10001168 <SystemCoreClockUpdate+0xb8>)
+100010e4:	681b      	ldr	r3, [r3, #0]
+100010e6:	431a      	orrs	r2, r3
+100010e8:	4b1f      	ldr	r3, [pc, #124]	; (10001168 <SystemCoreClockUpdate+0xb8>)
+100010ea:	601a      	str	r2, [r3, #0]
+    
+    /* Fractional divider is enabled and used */
+    if (((SCU_CLK->CLKCR1) & SCU_CLK_CLKCR1_DCLKSEL_Msk) == 0U)
+100010ec:	4b1c      	ldr	r3, [pc, #112]	; (10001160 <SystemCoreClockUpdate+0xb0>)
+100010ee:	69da      	ldr	r2, [r3, #28]
+100010f0:	2380      	movs	r3, #128	; 0x80
+100010f2:	009b      	lsls	r3, r3, #2
+100010f4:	4013      	ands	r3, r2
+100010f6:	d10e      	bne.n	10001116 <SystemCoreClockUpdate+0x66>
+    {
+       SystemCoreClock = ((uint32_t)((DCO1_FREQUENCY << 6U) / ((IDIV << 10) + FDIV))) << 4U;
+100010f8:	4b1a      	ldr	r3, [pc, #104]	; (10001164 <SystemCoreClockUpdate+0xb4>)
+100010fa:	681b      	ldr	r3, [r3, #0]
+100010fc:	029a      	lsls	r2, r3, #10
+100010fe:	4b1a      	ldr	r3, [pc, #104]	; (10001168 <SystemCoreClockUpdate+0xb8>)
+10001100:	681b      	ldr	r3, [r3, #0]
+10001102:	18d3      	adds	r3, r2, r3
+10001104:	4819      	ldr	r0, [pc, #100]	; (1000116c <SystemCoreClockUpdate+0xbc>)
+10001106:	1c19      	adds	r1, r3, #0
+10001108:	f000 faa6 	bl	10001658 <__aeabi_uidiv>
+1000110c:	1c03      	adds	r3, r0, #0
+1000110e:	011a      	lsls	r2, r3, #4
+10001110:	4b17      	ldr	r3, [pc, #92]	; (10001170 <SystemCoreClockUpdate+0xc0>)
+10001112:	601a      	str	r2, [r3, #0]
+10001114:	e021      	b.n	1000115a <SystemCoreClockUpdate+0xaa>
+    }
+    else
+    {
+       SystemCoreClock = ((uint32_t)((OSCHP_GetFrequency() << 6U) / ((IDIV << 10) + FDIV))) << 4U;
+10001116:	f000 f82f 	bl	10001178 <OSCHP_GetFrequency>
+1000111a:	1c03      	adds	r3, r0, #0
+1000111c:	0199      	lsls	r1, r3, #6
+1000111e:	4b11      	ldr	r3, [pc, #68]	; (10001164 <SystemCoreClockUpdate+0xb4>)
+10001120:	681b      	ldr	r3, [r3, #0]
+10001122:	029a      	lsls	r2, r3, #10
+10001124:	4b10      	ldr	r3, [pc, #64]	; (10001168 <SystemCoreClockUpdate+0xb8>)
+10001126:	681b      	ldr	r3, [r3, #0]
+10001128:	18d3      	adds	r3, r2, r3
+1000112a:	1c08      	adds	r0, r1, #0
+1000112c:	1c19      	adds	r1, r3, #0
+1000112e:	f000 fa93 	bl	10001658 <__aeabi_uidiv>
+10001132:	1c03      	adds	r3, r0, #0
+10001134:	011a      	lsls	r2, r3, #4
+10001136:	4b0e      	ldr	r3, [pc, #56]	; (10001170 <SystemCoreClockUpdate+0xc0>)
+10001138:	601a      	str	r2, [r3, #0]
+1000113a:	e00e      	b.n	1000115a <SystemCoreClockUpdate+0xaa>
+    }
+  }
+  else
+  {
+    /* Fractional divider bypassed. */
+    if (((SCU_CLK->CLKCR1) & SCU_CLK_CLKCR1_DCLKSEL_Msk) == 0U)
+1000113c:	4b08      	ldr	r3, [pc, #32]	; (10001160 <SystemCoreClockUpdate+0xb0>)
+1000113e:	69da      	ldr	r2, [r3, #28]
+10001140:	2380      	movs	r3, #128	; 0x80
+10001142:	009b      	lsls	r3, r3, #2
+10001144:	4013      	ands	r3, r2
+10001146:	d103      	bne.n	10001150 <SystemCoreClockUpdate+0xa0>
+    {
+        SystemCoreClock = DCO1_FREQUENCY;
+10001148:	4b09      	ldr	r3, [pc, #36]	; (10001170 <SystemCoreClockUpdate+0xc0>)
+1000114a:	4a0a      	ldr	r2, [pc, #40]	; (10001174 <SystemCoreClockUpdate+0xc4>)
+1000114c:	601a      	str	r2, [r3, #0]
+1000114e:	e004      	b.n	1000115a <SystemCoreClockUpdate+0xaa>
+    }
+    else
+    {
+        SystemCoreClock = OSCHP_GetFrequency();
+10001150:	f000 f812 	bl	10001178 <OSCHP_GetFrequency>
+10001154:	1c02      	adds	r2, r0, #0
+10001156:	4b06      	ldr	r3, [pc, #24]	; (10001170 <SystemCoreClockUpdate+0xc0>)
+10001158:	601a      	str	r2, [r3, #0]
+    }
+  }
+}
+1000115a:	46bd      	mov	sp, r7
+1000115c:	bd80      	pop	{r7, pc}
+1000115e:	46c0      	nop			; (mov r8, r8)
+10001160:	40010300 	.word	0x40010300
+10001164:	200005b4 	.word	0x200005b4
+10001168:	200005b8 	.word	0x200005b8
+1000116c:	b71b0000 	.word	0xb71b0000
+10001170:	20003ffc 	.word	0x20003ffc
+10001174:	02dc6c00 	.word	0x02dc6c00
+
+10001178 <OSCHP_GetFrequency>:
+
+__WEAK uint32_t OSCHP_GetFrequency(void)
+{
+10001178:	b580      	push	{r7, lr}
+1000117a:	af00      	add	r7, sp, #0
+  return OSCHP_FREQUENCY;
+1000117c:	4b01      	ldr	r3, [pc, #4]	; (10001184 <OSCHP_GetFrequency+0xc>)
+}
+1000117e:	1c18      	adds	r0, r3, #0
+10001180:	46bd      	mov	sp, r7
+10001182:	bd80      	pop	{r7, pc}
+10001184:	01312d00 	.word	0x01312d00
+
+10001188 <XMC_GPIO_Init>:
+/*******************************************************************************
+ * API IMPLEMENTATION
+ *******************************************************************************/
+
+void XMC_GPIO_Init(XMC_GPIO_PORT_t *const port, const uint8_t pin, const XMC_GPIO_CONFIG_t *const config)
+{
+10001188:	b590      	push	{r4, r7, lr}
+1000118a:	b085      	sub	sp, #20
+1000118c:	af00      	add	r7, sp, #0
+1000118e:	60f8      	str	r0, [r7, #12]
+10001190:	607a      	str	r2, [r7, #4]
+10001192:	230b      	movs	r3, #11
+10001194:	18fb      	adds	r3, r7, r3
+10001196:	1c0a      	adds	r2, r1, #0
+10001198:	701a      	strb	r2, [r3, #0]
+  XMC_ASSERT("XMC_GPIO_Init: Invalid port", XMC_GPIO_CHECK_PORT(port));
+  XMC_ASSERT("XMC_GPIO_Init: Invalid mode", XMC_GPIO_IsModeValid(config->mode));
+  XMC_ASSERT("XMC_GPIO_Init: Invalid input hysteresis", XMC_GPIO_CHECK_INPUT_HYSTERESIS(config->input_hysteresis));
+
+  /* Switch to input */
+  port->IOCR[pin >> 2U] &= ~(uint32_t)((uint32_t)PORT_IOCR_PC_Msk << (PORT_IOCR_PC_Size * (pin & 0x3U)));
+1000119a:	230b      	movs	r3, #11
+1000119c:	18fb      	adds	r3, r7, r3
+1000119e:	781b      	ldrb	r3, [r3, #0]
+100011a0:	089b      	lsrs	r3, r3, #2
+100011a2:	b2db      	uxtb	r3, r3
+100011a4:	1c18      	adds	r0, r3, #0
+100011a6:	230b      	movs	r3, #11
+100011a8:	18fb      	adds	r3, r7, r3
+100011aa:	781b      	ldrb	r3, [r3, #0]
+100011ac:	089b      	lsrs	r3, r3, #2
+100011ae:	b2db      	uxtb	r3, r3
+100011b0:	1c1a      	adds	r2, r3, #0
+100011b2:	68fb      	ldr	r3, [r7, #12]
+100011b4:	3204      	adds	r2, #4
+100011b6:	0092      	lsls	r2, r2, #2
+100011b8:	58d3      	ldr	r3, [r2, r3]
+100011ba:	220b      	movs	r2, #11
+100011bc:	18ba      	adds	r2, r7, r2
+100011be:	7812      	ldrb	r2, [r2, #0]
+100011c0:	2103      	movs	r1, #3
+100011c2:	400a      	ands	r2, r1
+100011c4:	00d2      	lsls	r2, r2, #3
+100011c6:	1c11      	adds	r1, r2, #0
+100011c8:	22fc      	movs	r2, #252	; 0xfc
+100011ca:	408a      	lsls	r2, r1
+100011cc:	43d2      	mvns	r2, r2
+100011ce:	401a      	ands	r2, r3
+100011d0:	1c11      	adds	r1, r2, #0
+100011d2:	68fb      	ldr	r3, [r7, #12]
+100011d4:	1d02      	adds	r2, r0, #4
+100011d6:	0092      	lsls	r2, r2, #2
+100011d8:	50d1      	str	r1, [r2, r3]
+
+  /* HW port control is disabled */
+  port->HWSEL &= ~(uint32_t)((uint32_t)PORT_HWSEL_Msk << ((uint32_t)pin << 1U));
+100011da:	68fb      	ldr	r3, [r7, #12]
+100011dc:	6f5b      	ldr	r3, [r3, #116]	; 0x74
+100011de:	220b      	movs	r2, #11
+100011e0:	18ba      	adds	r2, r7, r2
+100011e2:	7812      	ldrb	r2, [r2, #0]
+100011e4:	0052      	lsls	r2, r2, #1
+100011e6:	1c11      	adds	r1, r2, #0
+100011e8:	2203      	movs	r2, #3
+100011ea:	408a      	lsls	r2, r1
+100011ec:	43d2      	mvns	r2, r2
+100011ee:	401a      	ands	r2, r3
+100011f0:	68fb      	ldr	r3, [r7, #12]
+100011f2:	675a      	str	r2, [r3, #116]	; 0x74
+
+  /* Set input hysteresis */
+  port->PHCR[(uint32_t)pin >> 3U] &= ~(uint32_t)((uint32_t)PORT_PHCR_Msk << ((uint32_t)PORT_PHCR_Size * ((uint32_t)pin & 0x7U)));
+100011f4:	230b      	movs	r3, #11
+100011f6:	18fb      	adds	r3, r7, r3
+100011f8:	781b      	ldrb	r3, [r3, #0]
+100011fa:	08db      	lsrs	r3, r3, #3
+100011fc:	b2db      	uxtb	r3, r3
+100011fe:	1c18      	adds	r0, r3, #0
+10001200:	230b      	movs	r3, #11
+10001202:	18fb      	adds	r3, r7, r3
+10001204:	781b      	ldrb	r3, [r3, #0]
+10001206:	08db      	lsrs	r3, r3, #3
+10001208:	b2db      	uxtb	r3, r3
+1000120a:	1c1a      	adds	r2, r3, #0
+1000120c:	68fb      	ldr	r3, [r7, #12]
+1000120e:	3210      	adds	r2, #16
+10001210:	0092      	lsls	r2, r2, #2
+10001212:	58d3      	ldr	r3, [r2, r3]
+10001214:	220b      	movs	r2, #11
+10001216:	18ba      	adds	r2, r7, r2
+10001218:	7812      	ldrb	r2, [r2, #0]
+1000121a:	2107      	movs	r1, #7
+1000121c:	400a      	ands	r2, r1
+1000121e:	0092      	lsls	r2, r2, #2
+10001220:	1c11      	adds	r1, r2, #0
+10001222:	2204      	movs	r2, #4
+10001224:	408a      	lsls	r2, r1
+10001226:	43d2      	mvns	r2, r2
+10001228:	401a      	ands	r2, r3
+1000122a:	1c11      	adds	r1, r2, #0
+1000122c:	68fb      	ldr	r3, [r7, #12]
+1000122e:	1c02      	adds	r2, r0, #0
+10001230:	3210      	adds	r2, #16
+10001232:	0092      	lsls	r2, r2, #2
+10001234:	50d1      	str	r1, [r2, r3]
+  port->PHCR[(uint32_t)pin >> 3U] |= (uint32_t)config->input_hysteresis << ((uint32_t)PORT_PHCR_Size * ((uint32_t)pin & 0x7U));
+10001236:	230b      	movs	r3, #11
+10001238:	18fb      	adds	r3, r7, r3
+1000123a:	781b      	ldrb	r3, [r3, #0]
+1000123c:	08db      	lsrs	r3, r3, #3
+1000123e:	b2db      	uxtb	r3, r3
+10001240:	1c18      	adds	r0, r3, #0
+10001242:	230b      	movs	r3, #11
+10001244:	18fb      	adds	r3, r7, r3
+10001246:	781b      	ldrb	r3, [r3, #0]
+10001248:	08db      	lsrs	r3, r3, #3
+1000124a:	b2db      	uxtb	r3, r3
+1000124c:	1c1a      	adds	r2, r3, #0
+1000124e:	68fb      	ldr	r3, [r7, #12]
+10001250:	3210      	adds	r2, #16
+10001252:	0092      	lsls	r2, r2, #2
+10001254:	58d2      	ldr	r2, [r2, r3]
+10001256:	687b      	ldr	r3, [r7, #4]
+10001258:	785b      	ldrb	r3, [r3, #1]
+1000125a:	1c1c      	adds	r4, r3, #0
+1000125c:	230b      	movs	r3, #11
+1000125e:	18fb      	adds	r3, r7, r3
+10001260:	781b      	ldrb	r3, [r3, #0]
+10001262:	2107      	movs	r1, #7
+10001264:	400b      	ands	r3, r1
+10001266:	009b      	lsls	r3, r3, #2
+10001268:	409c      	lsls	r4, r3
+1000126a:	1c23      	adds	r3, r4, #0
+1000126c:	431a      	orrs	r2, r3
+1000126e:	1c11      	adds	r1, r2, #0
+10001270:	68fb      	ldr	r3, [r7, #12]
+10001272:	1c02      	adds	r2, r0, #0
+10001274:	3210      	adds	r2, #16
+10001276:	0092      	lsls	r2, r2, #2
+10001278:	50d1      	str	r1, [r2, r3]
+
+  /* Enable digital input */
+  if (XMC_GPIO_CHECK_ANALOG_PORT(port))
+1000127a:	68fb      	ldr	r3, [r7, #12]
+1000127c:	4a20      	ldr	r2, [pc, #128]	; (10001300 <XMC_GPIO_Init+0x178>)
+1000127e:	4293      	cmp	r3, r2
+10001280:	d10b      	bne.n	1000129a <XMC_GPIO_Init+0x112>
+  {
+    port->PDISC &= ~(uint32_t)((uint32_t)0x1U << pin);
+10001282:	68fb      	ldr	r3, [r7, #12]
+10001284:	6e1b      	ldr	r3, [r3, #96]	; 0x60
+10001286:	220b      	movs	r2, #11
+10001288:	18ba      	adds	r2, r7, r2
+1000128a:	7812      	ldrb	r2, [r2, #0]
+1000128c:	2101      	movs	r1, #1
+1000128e:	4091      	lsls	r1, r2
+10001290:	1c0a      	adds	r2, r1, #0
+10001292:	43d2      	mvns	r2, r2
+10001294:	401a      	ands	r2, r3
+10001296:	68fb      	ldr	r3, [r7, #12]
+10001298:	661a      	str	r2, [r3, #96]	; 0x60
+  }
+
+  if ((config->mode & XMC_GPIO_MODE_OE) != 0)
+1000129a:	687b      	ldr	r3, [r7, #4]
+1000129c:	781b      	ldrb	r3, [r3, #0]
+1000129e:	b2db      	uxtb	r3, r3
+100012a0:	b25b      	sxtb	r3, r3
+100012a2:	2b00      	cmp	r3, #0
+100012a4:	da07      	bge.n	100012b6 <XMC_GPIO_Init+0x12e>
+  {
+    /* If output is enabled */
+
+    /* Set output level */
+    port->OMR = (uint32_t)config->output_level << pin;
+100012a6:	687b      	ldr	r3, [r7, #4]
+100012a8:	685a      	ldr	r2, [r3, #4]
+100012aa:	230b      	movs	r3, #11
+100012ac:	18fb      	adds	r3, r7, r3
+100012ae:	781b      	ldrb	r3, [r3, #0]
+100012b0:	409a      	lsls	r2, r3
+100012b2:	68fb      	ldr	r3, [r7, #12]
+100012b4:	605a      	str	r2, [r3, #4]
+  }
+
+  /* Set mode */
+  port->IOCR[pin >> 2U] |= (uint32_t)config->mode << (PORT_IOCR_PC_Size * (pin & 0x3U));
+100012b6:	230b      	movs	r3, #11
+100012b8:	18fb      	adds	r3, r7, r3
+100012ba:	781b      	ldrb	r3, [r3, #0]
+100012bc:	089b      	lsrs	r3, r3, #2
+100012be:	b2db      	uxtb	r3, r3
+100012c0:	1c18      	adds	r0, r3, #0
+100012c2:	230b      	movs	r3, #11
+100012c4:	18fb      	adds	r3, r7, r3
+100012c6:	781b      	ldrb	r3, [r3, #0]
+100012c8:	089b      	lsrs	r3, r3, #2
+100012ca:	b2db      	uxtb	r3, r3
+100012cc:	1c1a      	adds	r2, r3, #0
+100012ce:	68fb      	ldr	r3, [r7, #12]
+100012d0:	3204      	adds	r2, #4
+100012d2:	0092      	lsls	r2, r2, #2
+100012d4:	58d2      	ldr	r2, [r2, r3]
+100012d6:	687b      	ldr	r3, [r7, #4]
+100012d8:	781b      	ldrb	r3, [r3, #0]
+100012da:	1c1c      	adds	r4, r3, #0
+100012dc:	230b      	movs	r3, #11
+100012de:	18fb      	adds	r3, r7, r3
+100012e0:	781b      	ldrb	r3, [r3, #0]
+100012e2:	2103      	movs	r1, #3
+100012e4:	400b      	ands	r3, r1
+100012e6:	00db      	lsls	r3, r3, #3
+100012e8:	409c      	lsls	r4, r3
+100012ea:	1c23      	adds	r3, r4, #0
+100012ec:	431a      	orrs	r2, r3
+100012ee:	1c11      	adds	r1, r2, #0
+100012f0:	68fb      	ldr	r3, [r7, #12]
+100012f2:	1d02      	adds	r2, r0, #4
+100012f4:	0092      	lsls	r2, r2, #2
+100012f6:	50d1      	str	r1, [r2, r3]
+}
+100012f8:	46bd      	mov	sp, r7
+100012fa:	b005      	add	sp, #20
+100012fc:	bd90      	pop	{r4, r7, pc}
+100012fe:	46c0      	nop			; (mov r8, r8)
+10001300:	40040200 	.word	0x40040200
+
+10001304 <XMC_SCU_LockProtectedBits>:
+#endif
+}
+
+/* API to lock protected bitfields from being modified */
+void XMC_SCU_LockProtectedBits(void)
+{
+10001304:	b580      	push	{r7, lr}
+10001306:	af00      	add	r7, sp, #0
+  SCU_GENERAL->PASSWD = SCU_GCU_PASSWD_PROT_ENABLE;
+10001308:	4b02      	ldr	r3, [pc, #8]	; (10001314 <XMC_SCU_LockProtectedBits+0x10>)
+1000130a:	22c3      	movs	r2, #195	; 0xc3
+1000130c:	625a      	str	r2, [r3, #36]	; 0x24
+}
+1000130e:	46bd      	mov	sp, r7
+10001310:	bd80      	pop	{r7, pc}
+10001312:	46c0      	nop			; (mov r8, r8)
+10001314:	40010000 	.word	0x40010000
+
+10001318 <XMC_SCU_UnlockProtectedBits>:
+
+/* API to make protected bitfields available for modification */
+void XMC_SCU_UnlockProtectedBits(void)
+{
+10001318:	b580      	push	{r7, lr}
+1000131a:	af00      	add	r7, sp, #0
+  SCU_GENERAL->PASSWD = SCU_GCU_PASSWD_PROT_DISABLE;
+1000131c:	4b05      	ldr	r3, [pc, #20]	; (10001334 <XMC_SCU_UnlockProtectedBits+0x1c>)
+1000131e:	22c0      	movs	r2, #192	; 0xc0
+10001320:	625a      	str	r2, [r3, #36]	; 0x24
+
+  while (((SCU_GENERAL->PASSWD) & SCU_GENERAL_PASSWD_PROTS_Msk))
+10001322:	46c0      	nop			; (mov r8, r8)
+10001324:	4b03      	ldr	r3, [pc, #12]	; (10001334 <XMC_SCU_UnlockProtectedBits+0x1c>)
+10001326:	6a5b      	ldr	r3, [r3, #36]	; 0x24
+10001328:	2204      	movs	r2, #4
+1000132a:	4013      	ands	r3, r2
+1000132c:	d1fa      	bne.n	10001324 <XMC_SCU_UnlockProtectedBits+0xc>
+  {
+    /* Loop until the lock is removed */
+  }
+}
+1000132e:	46bd      	mov	sp, r7
+10001330:	bd80      	pop	{r7, pc}
+10001332:	46c0      	nop			; (mov r8, r8)
+10001334:	40010000 	.word	0x40010000
+
+10001338 <XMC_SCU_CLOCK_Init>:
+}
+
+
+/* API which initializes the clock tree ofthe device */
+void XMC_SCU_CLOCK_Init(const XMC_SCU_CLOCK_CONFIG_t *const config)
+{
+10001338:	b580      	push	{r7, lr}
+1000133a:	b086      	sub	sp, #24
+1000133c:	af00      	add	r7, sp, #0
+1000133e:	6078      	str	r0, [r7, #4]
+  /* Remove protection */
+  XMC_SCU_UnlockProtectedBits();
+10001340:	f7ff ffea 	bl	10001318 <XMC_SCU_UnlockProtectedBits>
+
+#if (UC_SERIES == XMC14)
+  /* OSCHP source selection - OSC mode */
+
+  if (config->oschp_mode != XMC_SCU_CLOCK_OSCHP_MODE_DISABLED)
+10001344:	687b      	ldr	r3, [r7, #4]
+10001346:	799b      	ldrb	r3, [r3, #6]
+10001348:	2b30      	cmp	r3, #48	; 0x30
+1000134a:	d053      	beq.n	100013f4 <XMC_SCU_CLOCK_Init+0xbc>
+  {
+    if (OSCHP_GetFrequency() > 20000000U)
+1000134c:	f7ff ff14 	bl	10001178 <OSCHP_GetFrequency>
+10001350:	1e02      	subs	r2, r0, #0
+10001352:	4b49      	ldr	r3, [pc, #292]	; (10001478 <XMC_SCU_CLOCK_Init+0x140>)
+10001354:	429a      	cmp	r2, r3
+10001356:	d909      	bls.n	1000136c <XMC_SCU_CLOCK_Init+0x34>
+    {
+      SCU_ANALOG->ANAOSCHPCTRL |= (uint16_t)SCU_ANALOG_ANAOSCHPCTRL_HYSCTRL_Msk;
+10001358:	4a48      	ldr	r2, [pc, #288]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+1000135a:	4948      	ldr	r1, [pc, #288]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+1000135c:	2390      	movs	r3, #144	; 0x90
+1000135e:	5acb      	ldrh	r3, [r1, r3]
+10001360:	b29b      	uxth	r3, r3
+10001362:	2140      	movs	r1, #64	; 0x40
+10001364:	430b      	orrs	r3, r1
+10001366:	b299      	uxth	r1, r3
+10001368:	2390      	movs	r3, #144	; 0x90
+1000136a:	52d1      	strh	r1, [r2, r3]
+    }
+
+    SCU_ANALOG->ANAOSCHPCTRL = (uint16_t)(SCU_ANALOG->ANAOSCHPCTRL & ~(SCU_ANALOG_ANAOSCHPCTRL_SHBY_Msk | SCU_ANALOG_ANAOSCHPCTRL_MODE_Msk)) |
+1000136c:	4a43      	ldr	r2, [pc, #268]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+1000136e:	4943      	ldr	r1, [pc, #268]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+10001370:	2390      	movs	r3, #144	; 0x90
+10001372:	5acb      	ldrh	r3, [r1, r3]
+10001374:	b29b      	uxth	r3, r3
+10001376:	b29b      	uxth	r3, r3
+10001378:	1c19      	adds	r1, r3, #0
+1000137a:	2332      	movs	r3, #50	; 0x32
+1000137c:	4399      	bics	r1, r3
+1000137e:	1c0b      	adds	r3, r1, #0
+10001380:	b299      	uxth	r1, r3
+                               config->oschp_mode;
+10001382:	687b      	ldr	r3, [r7, #4]
+10001384:	799b      	ldrb	r3, [r3, #6]
+    if (OSCHP_GetFrequency() > 20000000U)
+    {
+      SCU_ANALOG->ANAOSCHPCTRL |= (uint16_t)SCU_ANALOG_ANAOSCHPCTRL_HYSCTRL_Msk;
+    }
+
+    SCU_ANALOG->ANAOSCHPCTRL = (uint16_t)(SCU_ANALOG->ANAOSCHPCTRL & ~(SCU_ANALOG_ANAOSCHPCTRL_SHBY_Msk | SCU_ANALOG_ANAOSCHPCTRL_MODE_Msk)) |
+10001386:	b29b      	uxth	r3, r3
+10001388:	430b      	orrs	r3, r1
+1000138a:	b29b      	uxth	r3, r3
+1000138c:	b299      	uxth	r1, r3
+1000138e:	2390      	movs	r3, #144	; 0x90
+10001390:	52d1      	strh	r1, [r2, r3]
+                               config->oschp_mode;
+
+    do
+    {
+      /* clear the status bit before restarting the detection. */
+      SCU_INTERRUPT->SRCLR1 = SCU_INTERRUPT_SRCLR1_LOECI_Msk;
+10001392:	4b3b      	ldr	r3, [pc, #236]	; (10001480 <XMC_SCU_CLOCK_Init+0x148>)
+10001394:	2202      	movs	r2, #2
+10001396:	629a      	str	r2, [r3, #40]	; 0x28
+
+      /* According to errata SCU_CM.023, to reset the XOWD it is needed to disable/enable the watchdog,
+         keeping in between at least one DCO2 cycle */
+
+      /* Disable XOWD */
+      SCU_CLK->OSCCSR &= ~SCU_CLK_OSCCSR_XOWDEN_Msk;
+10001398:	4b3a      	ldr	r3, [pc, #232]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+1000139a:	4a3a      	ldr	r2, [pc, #232]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+1000139c:	6952      	ldr	r2, [r2, #20]
+1000139e:	493a      	ldr	r1, [pc, #232]	; (10001488 <XMC_SCU_CLOCK_Init+0x150>)
+100013a0:	400a      	ands	r2, r1
+100013a2:	615a      	str	r2, [r3, #20]
+100013a4:	4b39      	ldr	r3, [pc, #228]	; (1000148c <XMC_SCU_CLOCK_Init+0x154>)
+100013a6:	617b      	str	r3, [r7, #20]
+100013a8:	e000      	b.n	100013ac <XMC_SCU_CLOCK_Init+0x74>
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+  {
+    __NOP();
+100013aa:	46c0      	nop			; (mov r8, r8)
+
+#if UC_SERIES == XMC14
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+100013ac:	697b      	ldr	r3, [r7, #20]
+100013ae:	3b01      	subs	r3, #1
+100013b0:	617b      	str	r3, [r7, #20]
+100013b2:	697b      	ldr	r3, [r7, #20]
+100013b4:	2b00      	cmp	r3, #0
+100013b6:	d1f8      	bne.n	100013aa <XMC_SCU_CLOCK_Init+0x72>
+      /* Clock domains synchronization, at least 1 DCO2 cycle */
+      /* delay value calculation assuming worst case DCO1=48Mhz and 3cycles per delay iteration */
+      delay(538);
+
+      /* Enable XOWD */
+      SCU_CLK->OSCCSR |= SCU_CLK_OSCCSR_XOWDEN_Msk | SCU_CLK_OSCCSR_XOWDRES_Msk;
+100013b8:	4b32      	ldr	r3, [pc, #200]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+100013ba:	4a32      	ldr	r2, [pc, #200]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+100013bc:	6952      	ldr	r2, [r2, #20]
+100013be:	21c0      	movs	r1, #192	; 0xc0
+100013c0:	0489      	lsls	r1, r1, #18
+100013c2:	430a      	orrs	r2, r1
+100013c4:	615a      	str	r2, [r3, #20]
+
+      /* OSCCSR.XOWDRES bit will be automatically reset to 0 after XOWD is reset */
+      while (SCU_CLK->OSCCSR & SCU_CLK_OSCCSR_XOWDRES_Msk);
+100013c6:	46c0      	nop			; (mov r8, r8)
+100013c8:	4b2e      	ldr	r3, [pc, #184]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+100013ca:	695a      	ldr	r2, [r3, #20]
+100013cc:	2380      	movs	r3, #128	; 0x80
+100013ce:	045b      	lsls	r3, r3, #17
+100013d0:	4013      	ands	r3, r2
+100013d2:	d1f9      	bne.n	100013c8 <XMC_SCU_CLOCK_Init+0x90>
+100013d4:	4b2e      	ldr	r3, [pc, #184]	; (10001490 <XMC_SCU_CLOCK_Init+0x158>)
+100013d6:	613b      	str	r3, [r7, #16]
+100013d8:	e000      	b.n	100013dc <XMC_SCU_CLOCK_Init+0xa4>
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+  {
+    __NOP();
+100013da:	46c0      	nop			; (mov r8, r8)
+
+#if UC_SERIES == XMC14
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+100013dc:	693b      	ldr	r3, [r7, #16]
+100013de:	3b01      	subs	r3, #1
+100013e0:	613b      	str	r3, [r7, #16]
+100013e2:	693b      	ldr	r3, [r7, #16]
+100013e4:	2b00      	cmp	r3, #0
+100013e6:	d1f8      	bne.n	100013da <XMC_SCU_CLOCK_Init+0xa2>
+      /* Wait a at least 5 DCO2 cycles for the update of the XTAL OWD result */
+      /* delay value calculation assuming worst case DCO1=48Mhz and 3cycles per delay iteration */
+      delay(2685);
+
+    }
+    while (SCU_INTERRUPT->SRRAW1 & SCU_INTERRUPT_SRRAW1_LOECI_Msk);
+100013e8:	4b25      	ldr	r3, [pc, #148]	; (10001480 <XMC_SCU_CLOCK_Init+0x148>)
+100013ea:	6a1b      	ldr	r3, [r3, #32]
+100013ec:	2202      	movs	r2, #2
+100013ee:	4013      	ands	r3, r2
+100013f0:	d1cf      	bne.n	10001392 <XMC_SCU_CLOCK_Init+0x5a>
+100013f2:	e009      	b.n	10001408 <XMC_SCU_CLOCK_Init+0xd0>
+  }
+  else /* (config->oschp_mode == XMC_SCU_CLOCK_OSCHP_MODE_DISABLED) */
+  {
+    SCU_ANALOG->ANAOSCHPCTRL |= SCU_ANALOG_ANAOSCHPCTRL_MODE_Msk;
+100013f4:	4a21      	ldr	r2, [pc, #132]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+100013f6:	4921      	ldr	r1, [pc, #132]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+100013f8:	2390      	movs	r3, #144	; 0x90
+100013fa:	5acb      	ldrh	r3, [r1, r3]
+100013fc:	b29b      	uxth	r3, r3
+100013fe:	2130      	movs	r1, #48	; 0x30
+10001400:	430b      	orrs	r3, r1
+10001402:	b299      	uxth	r1, r3
+10001404:	2390      	movs	r3, #144	; 0x90
+10001406:	52d1      	strh	r1, [r2, r3]
+  }
+
+  SCU_ANALOG->ANAOSCLPCTRL = (uint16_t)config->osclp_mode;
+10001408:	4a1c      	ldr	r2, [pc, #112]	; (1000147c <XMC_SCU_CLOCK_Init+0x144>)
+1000140a:	687b      	ldr	r3, [r7, #4]
+1000140c:	79db      	ldrb	r3, [r3, #7]
+1000140e:	b299      	uxth	r1, r3
+10001410:	238c      	movs	r3, #140	; 0x8c
+10001412:	52d1      	strh	r1, [r2, r3]
+#ifndef DISABLE_WAIT_RTC_XTAL_OSC_STARTUP
+  if (config->osclp_mode == XMC_SCU_CLOCK_OSCLP_MODE_OSC)
+10001414:	687b      	ldr	r3, [r7, #4]
+10001416:	79db      	ldrb	r3, [r3, #7]
+10001418:	2b00      	cmp	r3, #0
+1000141a:	d109      	bne.n	10001430 <XMC_SCU_CLOCK_Init+0xf8>
+1000141c:	4b1d      	ldr	r3, [pc, #116]	; (10001494 <XMC_SCU_CLOCK_Init+0x15c>)
+1000141e:	60fb      	str	r3, [r7, #12]
+10001420:	e000      	b.n	10001424 <XMC_SCU_CLOCK_Init+0xec>
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+  {
+    __NOP();
+10001422:	46c0      	nop			; (mov r8, r8)
+
+#if UC_SERIES == XMC14
+/* This is a local function used to generate the delay until register get updated with new configured value.  */
+__STATIC_FORCEINLINE void delay(uint32_t cycles)
+{
+  while (--cycles > 0U)
+10001424:	68fb      	ldr	r3, [r7, #12]
+10001426:	3b01      	subs	r3, #1
+10001428:	60fb      	str	r3, [r7, #12]
+1000142a:	68fb      	ldr	r3, [r7, #12]
+1000142c:	2b00      	cmp	r3, #0
+1000142e:	d1f8      	bne.n	10001422 <XMC_SCU_CLOCK_Init+0xea>
+    /* Wait oscillator startup time ~5s */
+    delay(6500000);
+  }
+#endif
+
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & ~SCU_CLK_CLKCR1_DCLKSEL_Msk) |
+10001430:	4b14      	ldr	r3, [pc, #80]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+10001432:	4a14      	ldr	r2, [pc, #80]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+10001434:	69d2      	ldr	r2, [r2, #28]
+10001436:	4918      	ldr	r1, [pc, #96]	; (10001498 <XMC_SCU_CLOCK_Init+0x160>)
+10001438:	400a      	ands	r2, r1
+                    config->dclk_src;
+1000143a:	6879      	ldr	r1, [r7, #4]
+1000143c:	8889      	ldrh	r1, [r1, #4]
+    /* Wait oscillator startup time ~5s */
+    delay(6500000);
+  }
+#endif
+
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & ~SCU_CLK_CLKCR1_DCLKSEL_Msk) |
+1000143e:	430a      	orrs	r2, r1
+10001440:	61da      	str	r2, [r3, #28]
+                    config->dclk_src;
+
+#endif
+  /* Update PCLK selection mux. */
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_PCLKSEL_Msk | SCU_CLK_CLKCR_RTCCLKSEL_Msk)) |
+10001442:	4a10      	ldr	r2, [pc, #64]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+10001444:	4b0f      	ldr	r3, [pc, #60]	; (10001484 <XMC_SCU_CLOCK_Init+0x14c>)
+10001446:	681b      	ldr	r3, [r3, #0]
+10001448:	4914      	ldr	r1, [pc, #80]	; (1000149c <XMC_SCU_CLOCK_Init+0x164>)
+1000144a:	4019      	ands	r1, r3
+                   config->rtc_src |
+1000144c:	687b      	ldr	r3, [r7, #4]
+1000144e:	68db      	ldr	r3, [r3, #12]
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & ~SCU_CLK_CLKCR1_DCLKSEL_Msk) |
+                    config->dclk_src;
+
+#endif
+  /* Update PCLK selection mux. */
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_PCLKSEL_Msk | SCU_CLK_CLKCR_RTCCLKSEL_Msk)) |
+10001450:	4319      	orrs	r1, r3
+                   config->rtc_src |
+                   config->pclk_src;
+10001452:	687b      	ldr	r3, [r7, #4]
+10001454:	689b      	ldr	r3, [r3, #8]
+                    config->dclk_src;
+
+#endif
+  /* Update PCLK selection mux. */
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_PCLKSEL_Msk | SCU_CLK_CLKCR_RTCCLKSEL_Msk)) |
+                   config->rtc_src |
+10001456:	430b      	orrs	r3, r1
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & ~SCU_CLK_CLKCR1_DCLKSEL_Msk) |
+                    config->dclk_src;
+
+#endif
+  /* Update PCLK selection mux. */
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_PCLKSEL_Msk | SCU_CLK_CLKCR_RTCCLKSEL_Msk)) |
+10001458:	6013      	str	r3, [r2, #0]
+                   config->rtc_src |
+                   config->pclk_src;
+
+  /* Close the lock opened above. */
+  XMC_SCU_LockProtectedBits();
+1000145a:	f7ff ff53 	bl	10001304 <XMC_SCU_LockProtectedBits>
+
+  /* Update the dividers now */
+  XMC_SCU_CLOCK_ScaleMCLKFrequency(config->idiv, config->fdiv);
+1000145e:	687b      	ldr	r3, [r7, #4]
+10001460:	789b      	ldrb	r3, [r3, #2]
+10001462:	1c1a      	adds	r2, r3, #0
+10001464:	687b      	ldr	r3, [r7, #4]
+10001466:	881b      	ldrh	r3, [r3, #0]
+10001468:	1c10      	adds	r0, r2, #0
+1000146a:	1c19      	adds	r1, r3, #0
+1000146c:	f000 f818 	bl	100014a0 <XMC_SCU_CLOCK_ScaleMCLKFrequency>
+
+}
+10001470:	46bd      	mov	sp, r7
+10001472:	b006      	add	sp, #24
+10001474:	bd80      	pop	{r7, pc}
+10001476:	46c0      	nop			; (mov r8, r8)
+10001478:	01312d00 	.word	0x01312d00
+1000147c:	40011000 	.word	0x40011000
+10001480:	40010038 	.word	0x40010038
+10001484:	40010300 	.word	0x40010300
+10001488:	fdffffff 	.word	0xfdffffff
+1000148c:	0000021a 	.word	0x0000021a
+10001490:	00000a7d 	.word	0x00000a7d
+10001494:	00632ea0 	.word	0x00632ea0
+10001498:	fffffdff 	.word	0xfffffdff
+1000149c:	fff0ffff 	.word	0xfff0ffff
+
+100014a0 <XMC_SCU_CLOCK_ScaleMCLKFrequency>:
+}
+
+
+/* A utility routine which updates the fractional dividers in steps */
+void XMC_SCU_CLOCK_ScaleMCLKFrequency(uint32_t idiv, uint32_t fdiv)
+{
+100014a0:	b580      	push	{r7, lr}
+100014a2:	b084      	sub	sp, #16
+100014a4:	af00      	add	r7, sp, #0
+100014a6:	6078      	str	r0, [r7, #4]
+100014a8:	6039      	str	r1, [r7, #0]
+  /* Find out current and target value of idiv */
+  uint32_t curr_idiv;
+
+  XMC_SCU_UnlockProtectedBits();
+100014aa:	f7ff ff35 	bl	10001318 <XMC_SCU_UnlockProtectedBits>
+
+  /* Take a snapshot of value already programmed into IDIV */
+  curr_idiv = (SCU_CLK->CLKCR & SCU_CLK_CLKCR_IDIV_Msk) >> SCU_CLK_CLKCR_IDIV_Pos;
+100014ae:	4b27      	ldr	r3, [pc, #156]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014b0:	681a      	ldr	r2, [r3, #0]
+100014b2:	23ff      	movs	r3, #255	; 0xff
+100014b4:	021b      	lsls	r3, r3, #8
+100014b6:	4013      	ands	r3, r2
+100014b8:	0a1b      	lsrs	r3, r3, #8
+100014ba:	60fb      	str	r3, [r7, #12]
+
+#if (UC_SERIES == XMC14)
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & (uint32_t)~(SCU_CLK_CLKCR1_FDIV_Msk)) |
+100014bc:	4b23      	ldr	r3, [pc, #140]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014be:	4a23      	ldr	r2, [pc, #140]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014c0:	69d2      	ldr	r2, [r2, #28]
+100014c2:	2103      	movs	r1, #3
+100014c4:	438a      	bics	r2, r1
+100014c6:	1c11      	adds	r1, r2, #0
+                    (uint32_t)((fdiv >> 8U) << SCU_CLK_CLKCR1_FDIV_Pos);
+100014c8:	683a      	ldr	r2, [r7, #0]
+100014ca:	0a12      	lsrs	r2, r2, #8
+
+  /* Take a snapshot of value already programmed into IDIV */
+  curr_idiv = (SCU_CLK->CLKCR & SCU_CLK_CLKCR_IDIV_Msk) >> SCU_CLK_CLKCR_IDIV_Pos;
+
+#if (UC_SERIES == XMC14)
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & (uint32_t)~(SCU_CLK_CLKCR1_FDIV_Msk)) |
+100014cc:	430a      	orrs	r2, r1
+100014ce:	61da      	str	r2, [r3, #28]
+                    (uint32_t)((fdiv >> 8U) << SCU_CLK_CLKCR1_FDIV_Pos);
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_FDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100014d0:	4b1e      	ldr	r3, [pc, #120]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014d2:	4a1e      	ldr	r2, [pc, #120]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014d4:	6812      	ldr	r2, [r2, #0]
+100014d6:	491e      	ldr	r1, [pc, #120]	; (10001550 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xb0>)
+100014d8:	4011      	ands	r1, r2
+                   (uint32_t)((fdiv & 0xffU) << SCU_CLK_CLKCR_FDIV_Pos) |
+100014da:	683a      	ldr	r2, [r7, #0]
+100014dc:	20ff      	movs	r0, #255	; 0xff
+100014de:	4002      	ands	r2, r0
+
+#if (UC_SERIES == XMC14)
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & (uint32_t)~(SCU_CLK_CLKCR1_FDIV_Msk)) |
+                    (uint32_t)((fdiv >> 8U) << SCU_CLK_CLKCR1_FDIV_Pos);
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_FDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100014e0:	430a      	orrs	r2, r1
+                   (uint32_t)((fdiv & 0xffU) << SCU_CLK_CLKCR_FDIV_Pos) |
+100014e2:	491c      	ldr	r1, [pc, #112]	; (10001554 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xb4>)
+100014e4:	430a      	orrs	r2, r1
+
+#if (UC_SERIES == XMC14)
+  SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & (uint32_t)~(SCU_CLK_CLKCR1_FDIV_Msk)) |
+                    (uint32_t)((fdiv >> 8U) << SCU_CLK_CLKCR1_FDIV_Pos);
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_FDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100014e6:	601a      	str	r2, [r3, #0]
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_FDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+                   (uint32_t)(fdiv << SCU_CLK_CLKCR_FDIV_Pos) |
+                   (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+#endif
+
+  while ((SCU_CLK->CLKCR)& SCU_CLK_CLKCR_VDDC2LOW_Msk)
+100014e8:	46c0      	nop			; (mov r8, r8)
+100014ea:	4b18      	ldr	r3, [pc, #96]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+100014ec:	681a      	ldr	r2, [r3, #0]
+100014ee:	2380      	movs	r3, #128	; 0x80
+100014f0:	05db      	lsls	r3, r3, #23
+100014f2:	4013      	ands	r3, r2
+100014f4:	d1f9      	bne.n	100014ea <XMC_SCU_CLOCK_ScaleMCLKFrequency+0x4a>
+  {
+    /* Spin until the core supply stabilizes */
+  }
+
+  if (curr_idiv <= idiv)
+100014f6:	68fa      	ldr	r2, [r7, #12]
+100014f8:	687b      	ldr	r3, [r7, #4]
+100014fa:	429a      	cmp	r2, r3
+100014fc:	d806      	bhi.n	1000150c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0x6c>
+  {
+    /* Requested IDIV is greater than currently programmed IDIV. So downscale the frequency */
+    XMC_SCU_CLOCK_lFrequencyDownScaling(curr_idiv, idiv);
+100014fe:	68fa      	ldr	r2, [r7, #12]
+10001500:	687b      	ldr	r3, [r7, #4]
+10001502:	1c10      	adds	r0, r2, #0
+10001504:	1c19      	adds	r1, r3, #0
+10001506:	f000 f853 	bl	100015b0 <XMC_SCU_CLOCK_lFrequencyDownScaling>
+1000150a:	e005      	b.n	10001518 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0x78>
+  }
+  else
+  {
+    /* Requested IDIV is lower than currently programmed IDIV. So upscale the frequency */
+    XMC_SCU_CLOCK_lFrequencyUpScaling(curr_idiv, idiv);
+1000150c:	68fa      	ldr	r2, [r7, #12]
+1000150e:	687b      	ldr	r3, [r7, #4]
+10001510:	1c10      	adds	r0, r2, #0
+10001512:	1c19      	adds	r1, r3, #0
+10001514:	f000 f822 	bl	1000155c <XMC_SCU_CLOCK_lFrequencyUpScaling>
+  }
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+10001518:	4b0c      	ldr	r3, [pc, #48]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+1000151a:	4a0c      	ldr	r2, [pc, #48]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+1000151c:	6812      	ldr	r2, [r2, #0]
+1000151e:	490e      	ldr	r1, [pc, #56]	; (10001558 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xb8>)
+10001520:	4011      	ands	r1, r2
+                   (uint32_t)(idiv << SCU_CLK_CLKCR_IDIV_Pos) | (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+10001522:	687a      	ldr	r2, [r7, #4]
+10001524:	0212      	lsls	r2, r2, #8
+  {
+    /* Requested IDIV is lower than currently programmed IDIV. So upscale the frequency */
+    XMC_SCU_CLOCK_lFrequencyUpScaling(curr_idiv, idiv);
+  }
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+10001526:	430a      	orrs	r2, r1
+                   (uint32_t)(idiv << SCU_CLK_CLKCR_IDIV_Pos) | (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+10001528:	490a      	ldr	r1, [pc, #40]	; (10001554 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xb4>)
+1000152a:	430a      	orrs	r2, r1
+  {
+    /* Requested IDIV is lower than currently programmed IDIV. So upscale the frequency */
+    XMC_SCU_CLOCK_lFrequencyUpScaling(curr_idiv, idiv);
+  }
+
+  SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+1000152c:	601a      	str	r2, [r3, #0]
+                   (uint32_t)(idiv << SCU_CLK_CLKCR_IDIV_Pos) | (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+
+  while ((SCU_CLK->CLKCR) & SCU_CLK_CLKCR_VDDC2LOW_Msk)
+1000152e:	46c0      	nop			; (mov r8, r8)
+10001530:	4b06      	ldr	r3, [pc, #24]	; (1000154c <XMC_SCU_CLOCK_ScaleMCLKFrequency+0xac>)
+10001532:	681a      	ldr	r2, [r3, #0]
+10001534:	2380      	movs	r3, #128	; 0x80
+10001536:	05db      	lsls	r3, r3, #23
+10001538:	4013      	ands	r3, r2
+1000153a:	d1f9      	bne.n	10001530 <XMC_SCU_CLOCK_ScaleMCLKFrequency+0x90>
+  {
+    /* Wait voltage suply stabilization */
+  }
+
+  XMC_SCU_LockProtectedBits();
+1000153c:	f7ff fee2 	bl	10001304 <XMC_SCU_LockProtectedBits>
+
+  SystemCoreClockUpdate();
+10001540:	f7ff fdb6 	bl	100010b0 <SystemCoreClockUpdate>
+
+}
+10001544:	46bd      	mov	sp, r7
+10001546:	b004      	add	sp, #16
+10001548:	bd80      	pop	{r7, pc}
+1000154a:	46c0      	nop			; (mov r8, r8)
+1000154c:	40010300 	.word	0x40010300
+10001550:	c00fff00 	.word	0xc00fff00
+10001554:	3ff00000 	.word	0x3ff00000
+10001558:	c00f00ff 	.word	0xc00f00ff
+
+1000155c <XMC_SCU_CLOCK_lFrequencyUpScaling>:
+
+/* Utility routine to perform frequency up scaling */
+static void XMC_SCU_CLOCK_lFrequencyUpScaling(uint32_t curr_idiv, uint32_t target_idiv)
+{
+1000155c:	b580      	push	{r7, lr}
+1000155e:	b082      	sub	sp, #8
+10001560:	af00      	add	r7, sp, #0
+10001562:	6078      	str	r0, [r7, #4]
+10001564:	6039      	str	r1, [r7, #0]
+  while (curr_idiv > (target_idiv * 4UL))
+10001566:	e014      	b.n	10001592 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x36>
+  {
+    curr_idiv = (uint32_t)(curr_idiv >> 2UL);   /* Divide by 4. */
+10001568:	687b      	ldr	r3, [r7, #4]
+1000156a:	089b      	lsrs	r3, r3, #2
+1000156c:	607b      	str	r3, [r7, #4]
+
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+1000156e:	4b0d      	ldr	r3, [pc, #52]	; (100015a4 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x48>)
+10001570:	4a0c      	ldr	r2, [pc, #48]	; (100015a4 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x48>)
+10001572:	6812      	ldr	r2, [r2, #0]
+10001574:	490c      	ldr	r1, [pc, #48]	; (100015a8 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x4c>)
+10001576:	4011      	ands	r1, r2
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+10001578:	687a      	ldr	r2, [r7, #4]
+1000157a:	0212      	lsls	r2, r2, #8
+{
+  while (curr_idiv > (target_idiv * 4UL))
+  {
+    curr_idiv = (uint32_t)(curr_idiv >> 2UL);   /* Divide by 4. */
+
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+1000157c:	430a      	orrs	r2, r1
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+1000157e:	490b      	ldr	r1, [pc, #44]	; (100015ac <XMC_SCU_CLOCK_lFrequencyUpScaling+0x50>)
+10001580:	430a      	orrs	r2, r1
+{
+  while (curr_idiv > (target_idiv * 4UL))
+  {
+    curr_idiv = (uint32_t)(curr_idiv >> 2UL);   /* Divide by 4. */
+
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+10001582:	601a      	str	r2, [r3, #0]
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+                     (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+
+    while (SCU_CLK->CLKCR & SCU_CLK_CLKCR_VDDC2LOW_Msk)
+10001584:	46c0      	nop			; (mov r8, r8)
+10001586:	4b07      	ldr	r3, [pc, #28]	; (100015a4 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x48>)
+10001588:	681a      	ldr	r2, [r3, #0]
+1000158a:	2380      	movs	r3, #128	; 0x80
+1000158c:	05db      	lsls	r3, r3, #23
+1000158e:	4013      	ands	r3, r2
+10001590:	d1f9      	bne.n	10001586 <XMC_SCU_CLOCK_lFrequencyUpScaling+0x2a>
+}
+
+/* Utility routine to perform frequency up scaling */
+static void XMC_SCU_CLOCK_lFrequencyUpScaling(uint32_t curr_idiv, uint32_t target_idiv)
+{
+  while (curr_idiv > (target_idiv * 4UL))
+10001592:	683b      	ldr	r3, [r7, #0]
+10001594:	009a      	lsls	r2, r3, #2
+10001596:	687b      	ldr	r3, [r7, #4]
+10001598:	429a      	cmp	r2, r3
+1000159a:	d3e5      	bcc.n	10001568 <XMC_SCU_CLOCK_lFrequencyUpScaling+0xc>
+    while (SCU_CLK->CLKCR & SCU_CLK_CLKCR_VDDC2LOW_Msk)
+    {
+      /* Wait voltage suply stabilization */
+    }
+  }
+}
+1000159c:	46bd      	mov	sp, r7
+1000159e:	b002      	add	sp, #8
+100015a0:	bd80      	pop	{r7, pc}
+100015a2:	46c0      	nop			; (mov r8, r8)
+100015a4:	40010300 	.word	0x40010300
+100015a8:	c00f00ff 	.word	0xc00f00ff
+100015ac:	3ff00000 	.word	0x3ff00000
+
+100015b0 <XMC_SCU_CLOCK_lFrequencyDownScaling>:
+
+/* Utility routine to perform frequency down scaling */
+static void XMC_SCU_CLOCK_lFrequencyDownScaling(uint32_t curr_idiv, uint32_t target_idiv)
+{
+100015b0:	b580      	push	{r7, lr}
+100015b2:	b082      	sub	sp, #8
+100015b4:	af00      	add	r7, sp, #0
+100015b6:	6078      	str	r0, [r7, #4]
+100015b8:	6039      	str	r1, [r7, #0]
+
+  while ((curr_idiv * 4UL) < target_idiv)
+100015ba:	e019      	b.n	100015f0 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x40>
+  {
+    if (0U == curr_idiv)
+100015bc:	687b      	ldr	r3, [r7, #4]
+100015be:	2b00      	cmp	r3, #0
+100015c0:	d101      	bne.n	100015c6 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x16>
+    {
+      curr_idiv = 1U;
+100015c2:	2301      	movs	r3, #1
+100015c4:	607b      	str	r3, [r7, #4]
+    }
+    curr_idiv  = (uint32_t)(curr_idiv << 2UL);   /* Multiply by 4. */
+100015c6:	687b      	ldr	r3, [r7, #4]
+100015c8:	009b      	lsls	r3, r3, #2
+100015ca:	607b      	str	r3, [r7, #4]
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100015cc:	4b0c      	ldr	r3, [pc, #48]	; (10001600 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x50>)
+100015ce:	4a0c      	ldr	r2, [pc, #48]	; (10001600 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x50>)
+100015d0:	6812      	ldr	r2, [r2, #0]
+100015d2:	490c      	ldr	r1, [pc, #48]	; (10001604 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x54>)
+100015d4:	4011      	ands	r1, r2
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+100015d6:	687a      	ldr	r2, [r7, #4]
+100015d8:	0212      	lsls	r2, r2, #8
+    if (0U == curr_idiv)
+    {
+      curr_idiv = 1U;
+    }
+    curr_idiv  = (uint32_t)(curr_idiv << 2UL);   /* Multiply by 4. */
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100015da:	430a      	orrs	r2, r1
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+100015dc:	490a      	ldr	r1, [pc, #40]	; (10001608 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x58>)
+100015de:	430a      	orrs	r2, r1
+    if (0U == curr_idiv)
+    {
+      curr_idiv = 1U;
+    }
+    curr_idiv  = (uint32_t)(curr_idiv << 2UL);   /* Multiply by 4. */
+    SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_IDIV_Msk | SCU_CLK_CLKCR_CNTADJ_Msk)) |
+100015e0:	601a      	str	r2, [r3, #0]
+                     (uint32_t)(curr_idiv << SCU_CLK_CLKCR_IDIV_Pos) |
+                     (uint32_t)(1023UL << SCU_CLK_CLKCR_CNTADJ_Pos);
+
+    while (SCU_CLK->CLKCR & SCU_CLK_CLKCR_VDDC2LOW_Msk)
+100015e2:	46c0      	nop			; (mov r8, r8)
+100015e4:	4b06      	ldr	r3, [pc, #24]	; (10001600 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x50>)
+100015e6:	681a      	ldr	r2, [r3, #0]
+100015e8:	2380      	movs	r3, #128	; 0x80
+100015ea:	05db      	lsls	r3, r3, #23
+100015ec:	4013      	ands	r3, r2
+100015ee:	d1f9      	bne.n	100015e4 <XMC_SCU_CLOCK_lFrequencyDownScaling+0x34>
+
+/* Utility routine to perform frequency down scaling */
+static void XMC_SCU_CLOCK_lFrequencyDownScaling(uint32_t curr_idiv, uint32_t target_idiv)
+{
+
+  while ((curr_idiv * 4UL) < target_idiv)
+100015f0:	687b      	ldr	r3, [r7, #4]
+100015f2:	009a      	lsls	r2, r3, #2
+100015f4:	683b      	ldr	r3, [r7, #0]
+100015f6:	429a      	cmp	r2, r3
+100015f8:	d3e0      	bcc.n	100015bc <XMC_SCU_CLOCK_lFrequencyDownScaling+0xc>
+    while (SCU_CLK->CLKCR & SCU_CLK_CLKCR_VDDC2LOW_Msk)
+    {
+      /* Wait voltage suply stabilization */
+    }
+  }
+}
+100015fa:	46bd      	mov	sp, r7
+100015fc:	b002      	add	sp, #8
+100015fe:	bd80      	pop	{r7, pc}
+10001600:	40010300 	.word	0x40010300
+10001604:	c00f00ff 	.word	0xc00f00ff
+10001608:	3ff00000 	.word	0x3ff00000
+
+1000160c <XMC_GPIO_SetHardwareControl>:
+  port->IOCR[(uint32_t)pin >> 2U] &= ~(uint32_t)((uint32_t)PORT_IOCR_PC_Msk << ((uint32_t)PORT_IOCR_PC_Size * ((uint32_t)pin & 0x3U)));
+  port->IOCR[(uint32_t)pin >> 2U] |= (uint32_t)mode << ((uint32_t)PORT_IOCR_PC_Size * ((uint32_t)pin & 0x3U));
+}
+
+void XMC_GPIO_SetHardwareControl(XMC_GPIO_PORT_t *const port, const uint8_t pin, const XMC_GPIO_HWCTRL_t hwctrl)
+{
+1000160c:	b580      	push	{r7, lr}
+1000160e:	b082      	sub	sp, #8
+10001610:	af00      	add	r7, sp, #0
+10001612:	6078      	str	r0, [r7, #4]
+10001614:	1c08      	adds	r0, r1, #0
+10001616:	1c11      	adds	r1, r2, #0
+10001618:	1cfb      	adds	r3, r7, #3
+1000161a:	1c02      	adds	r2, r0, #0
+1000161c:	701a      	strb	r2, [r3, #0]
+1000161e:	1cbb      	adds	r3, r7, #2
+10001620:	1c0a      	adds	r2, r1, #0
+10001622:	701a      	strb	r2, [r3, #0]
+  XMC_ASSERT("XMC_GPIO_SetHardwareControl: Invalid port", XMC_GPIO_CHECK_PORT(port));
+  XMC_ASSERT("XMC_GPIO_SetHardwareControl: Invalid hwctrl", XMC_GPIO_CHECK_HWCTRL(hwctrl));
+
+  port->HWSEL &= ~(uint32_t)((uint32_t)PORT_HWSEL_Msk << ((uint32_t)pin << 1U));
+10001624:	687b      	ldr	r3, [r7, #4]
+10001626:	6f5b      	ldr	r3, [r3, #116]	; 0x74
+10001628:	1cfa      	adds	r2, r7, #3
+1000162a:	7812      	ldrb	r2, [r2, #0]
+1000162c:	0052      	lsls	r2, r2, #1
+1000162e:	1c11      	adds	r1, r2, #0
+10001630:	2203      	movs	r2, #3
+10001632:	408a      	lsls	r2, r1
+10001634:	43d2      	mvns	r2, r2
+10001636:	401a      	ands	r2, r3
+10001638:	687b      	ldr	r3, [r7, #4]
+1000163a:	675a      	str	r2, [r3, #116]	; 0x74
+  port->HWSEL |= (uint32_t)hwctrl << ((uint32_t)pin << 1U);
+1000163c:	687b      	ldr	r3, [r7, #4]
+1000163e:	6f5a      	ldr	r2, [r3, #116]	; 0x74
+10001640:	1cbb      	adds	r3, r7, #2
+10001642:	781b      	ldrb	r3, [r3, #0]
+10001644:	1cf9      	adds	r1, r7, #3
+10001646:	7809      	ldrb	r1, [r1, #0]
+10001648:	0049      	lsls	r1, r1, #1
+1000164a:	408b      	lsls	r3, r1
+1000164c:	431a      	orrs	r2, r3
+1000164e:	687b      	ldr	r3, [r7, #4]
+10001650:	675a      	str	r2, [r3, #116]	; 0x74
+}
+10001652:	46bd      	mov	sp, r7
+10001654:	b002      	add	sp, #8
+10001656:	bd80      	pop	{r7, pc}
+
+10001658 <__aeabi_uidiv>:
+/***********************************************************************************************************************
+ * API IMPLEMENTATION - aeabi routines
+ **********************************************************************************************************************/
+/* This function performs unsigned integer division */
+uint32_t __aeabi_uidiv(uint32_t dividend, uint32_t divisor)
+{
+10001658:	b580      	push	{r7, lr}
+1000165a:	b088      	sub	sp, #32
+1000165c:	af00      	add	r7, sp, #0
+1000165e:	6078      	str	r0, [r7, #4]
+10001660:	6039      	str	r1, [r7, #0]
+ */
+__STATIC_FORCEINLINE uint32_t __get_PRIMASK(void)
+{
+  uint32_t result;
+
+  __ASM volatile ("MRS %0, primask" : "=r" (result) );
+10001662:	f3ef 8310 	mrs	r3, PRIMASK
+10001666:	617b      	str	r3, [r7, #20]
+  return(result);
+10001668:	697b      	ldr	r3, [r7, #20]
+ * API IMPLEMENTATION - Utility functions
+ ********************************************************************************************************************/
+__attribute__((always_inline)) __STATIC_INLINE uint32_t critical_section_enter(void)
+{
+  uint32_t status;
+  status = __get_PRIMASK();
+1000166a:	613b      	str	r3, [r7, #16]
+  \details Disables IRQ interrupts by setting the I-bit in the CPSR.
+           Can only be executed in Privileged modes.
+ */
+__STATIC_FORCEINLINE void __disable_irq(void)
+{
+  __ASM volatile ("cpsid i" : : : "memory");
+1000166c:	b672      	cpsid	i
+  __disable_irq ();
+  return status;
+1000166e:	693b      	ldr	r3, [r7, #16]
+/* This function performs unsigned integer division */
+uint32_t __aeabi_uidiv(uint32_t dividend, uint32_t divisor)
+{
+  uint32_t result;
+  uint32_t ics;
+  ics = critical_section_enter();
+10001670:	61fb      	str	r3, [r7, #28]
+
+  MATH->DIVCON  = XMC_MATH_UNSIGNED_DIVISION;
+10001672:	4b0c      	ldr	r3, [pc, #48]	; (100016a4 <__aeabi_uidiv+0x4c>)
+10001674:	2204      	movs	r2, #4
+10001676:	635a      	str	r2, [r3, #52]	; 0x34
+  MATH->DVD     = dividend;
+10001678:	4b0a      	ldr	r3, [pc, #40]	; (100016a4 <__aeabi_uidiv+0x4c>)
+1000167a:	687a      	ldr	r2, [r7, #4]
+1000167c:	621a      	str	r2, [r3, #32]
+  MATH->DVS     = divisor;
+1000167e:	4b09      	ldr	r3, [pc, #36]	; (100016a4 <__aeabi_uidiv+0x4c>)
+10001680:	683a      	ldr	r2, [r7, #0]
+10001682:	625a      	str	r2, [r3, #36]	; 0x24
+
+  result = MATH->QUOT;
+10001684:	4b07      	ldr	r3, [pc, #28]	; (100016a4 <__aeabi_uidiv+0x4c>)
+10001686:	6a9b      	ldr	r3, [r3, #40]	; 0x28
+10001688:	61bb      	str	r3, [r7, #24]
+1000168a:	69fb      	ldr	r3, [r7, #28]
+1000168c:	60fb      	str	r3, [r7, #12]
+1000168e:	68fb      	ldr	r3, [r7, #12]
+10001690:	60bb      	str	r3, [r7, #8]
+  \details Assigns the given value to the Priority Mask Register.
+  \param [in]    priMask  Priority Mask
+ */
+__STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
+{
+  __ASM volatile ("MSR primask, %0" : : "r" (priMask) : "memory");
+10001692:	68bb      	ldr	r3, [r7, #8]
+10001694:	f383 8810 	msr	PRIMASK, r3
+
+  critical_section_exit(ics);
+
+  return result;
+10001698:	69bb      	ldr	r3, [r7, #24]
+}
+1000169a:	1c18      	adds	r0, r3, #0
+1000169c:	46bd      	mov	sp, r7
+1000169e:	b008      	add	sp, #32
+100016a0:	bd80      	pop	{r7, pc}
+100016a2:	46c0      	nop			; (mov r8, r8)
+100016a4:	40030000 	.word	0x40030000
+
+100016a8 <__aeabi_idivmod>:
+  return ((remainder << 32) | quot);
+}
+
+/* This function performs signed integer division modulo */
+int64_t __aeabi_idivmod(int32_t dividend, int32_t divisor)
+{
+100016a8:	b5f0      	push	{r4, r5, r6, r7, lr}
+100016aa:	b08d      	sub	sp, #52	; 0x34
+100016ac:	af00      	add	r7, sp, #0
+100016ae:	6078      	str	r0, [r7, #4]
+100016b0:	6039      	str	r1, [r7, #0]
+ */
+__STATIC_FORCEINLINE uint32_t __get_PRIMASK(void)
+{
+  uint32_t result;
+
+  __ASM volatile ("MRS %0, primask" : "=r" (result) );
+100016b2:	f3ef 8210 	mrs	r2, PRIMASK
+100016b6:	617a      	str	r2, [r7, #20]
+  return(result);
+100016b8:	697a      	ldr	r2, [r7, #20]
+ * API IMPLEMENTATION - Utility functions
+ ********************************************************************************************************************/
+__attribute__((always_inline)) __STATIC_INLINE uint32_t critical_section_enter(void)
+{
+  uint32_t status;
+  status = __get_PRIMASK();
+100016ba:	613a      	str	r2, [r7, #16]
+  \details Disables IRQ interrupts by setting the I-bit in the CPSR.
+           Can only be executed in Privileged modes.
+ */
+__STATIC_FORCEINLINE void __disable_irq(void)
+{
+  __ASM volatile ("cpsid i" : : : "memory");
+100016bc:	b672      	cpsid	i
+  __disable_irq ();
+  return status;
+100016be:	693a      	ldr	r2, [r7, #16]
+int64_t __aeabi_idivmod(int32_t dividend, int32_t divisor)
+{
+  uint64_t remainder;
+  uint64_t quot;
+  uint32_t ics;
+  ics = critical_section_enter();
+100016c0:	62fa      	str	r2, [r7, #44]	; 0x2c
+
+  MATH->DIVCON  = XMC_MATH_SIGNED_DIVISION;
+100016c2:	4a15      	ldr	r2, [pc, #84]	; (10001718 <__aeabi_idivmod+0x70>)
+100016c4:	2100      	movs	r1, #0
+100016c6:	6351      	str	r1, [r2, #52]	; 0x34
+  MATH->DVD     = dividend;
+100016c8:	4a13      	ldr	r2, [pc, #76]	; (10001718 <__aeabi_idivmod+0x70>)
+100016ca:	6879      	ldr	r1, [r7, #4]
+100016cc:	6211      	str	r1, [r2, #32]
+  MATH->DVS     = divisor;
+100016ce:	4a12      	ldr	r2, [pc, #72]	; (10001718 <__aeabi_idivmod+0x70>)
+100016d0:	6839      	ldr	r1, [r7, #0]
+100016d2:	6251      	str	r1, [r2, #36]	; 0x24
+
+  remainder = (uint64_t)MATH->RMD;;
+100016d4:	4a10      	ldr	r2, [pc, #64]	; (10001718 <__aeabi_idivmod+0x70>)
+100016d6:	6ad2      	ldr	r2, [r2, #44]	; 0x2c
+100016d8:	623a      	str	r2, [r7, #32]
+100016da:	2200      	movs	r2, #0
+100016dc:	627a      	str	r2, [r7, #36]	; 0x24
+  quot    = (uint64_t)MATH->QUOT;
+100016de:	4a0e      	ldr	r2, [pc, #56]	; (10001718 <__aeabi_idivmod+0x70>)
+100016e0:	6a92      	ldr	r2, [r2, #40]	; 0x28
+100016e2:	61ba      	str	r2, [r7, #24]
+100016e4:	2200      	movs	r2, #0
+100016e6:	61fa      	str	r2, [r7, #28]
+100016e8:	6afa      	ldr	r2, [r7, #44]	; 0x2c
+100016ea:	60fa      	str	r2, [r7, #12]
+100016ec:	68fa      	ldr	r2, [r7, #12]
+100016ee:	60ba      	str	r2, [r7, #8]
+  \details Assigns the given value to the Priority Mask Register.
+  \param [in]    priMask  Priority Mask
+ */
+__STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
+{
+  __ASM volatile ("MSR primask, %0" : : "r" (priMask) : "memory");
+100016f0:	68ba      	ldr	r2, [r7, #8]
+100016f2:	f382 8810 	msr	PRIMASK, r2
+
+  critical_section_exit(ics);
+
+  return ((int64_t)((remainder << 32) | quot));
+100016f6:	6a3a      	ldr	r2, [r7, #32]
+100016f8:	0014      	movs	r4, r2
+100016fa:	2200      	movs	r2, #0
+100016fc:	1c13      	adds	r3, r2, #0
+100016fe:	69ba      	ldr	r2, [r7, #24]
+10001700:	431a      	orrs	r2, r3
+10001702:	1c15      	adds	r5, r2, #0
+10001704:	69fa      	ldr	r2, [r7, #28]
+10001706:	4322      	orrs	r2, r4
+10001708:	1c16      	adds	r6, r2, #0
+1000170a:	1c2b      	adds	r3, r5, #0
+1000170c:	1c34      	adds	r4, r6, #0
+}
+1000170e:	1c18      	adds	r0, r3, #0
+10001710:	1c21      	adds	r1, r4, #0
+10001712:	46bd      	mov	sp, r7
+10001714:	b00d      	add	sp, #52	; 0x34
+10001716:	bdf0      	pop	{r4, r5, r6, r7, pc}
+10001718:	40030000 	.word	0x40030000
+
+1000171c <_sbrk>:
+
+// defined in linker script
+extern caddr_t Heap_Bank1_Start;
+extern caddr_t Heap_Bank1_End;
+caddr_t _sbrk(int nbytes)
+{
+1000171c:	b580      	push	{r7, lr}
+1000171e:	b084      	sub	sp, #16
+10001720:	af00      	add	r7, sp, #0
+10001722:	6078      	str	r0, [r7, #4]
+  static caddr_t heap_ptr = NULL;
+  caddr_t base;
+
+  if (heap_ptr == NULL) {
+10001724:	4b14      	ldr	r3, [pc, #80]	; (10001778 <_sbrk+0x5c>)
+10001726:	681b      	ldr	r3, [r3, #0]
+10001728:	2b00      	cmp	r3, #0
+1000172a:	d102      	bne.n	10001732 <_sbrk+0x16>
+    heap_ptr = (caddr_t)&Heap_Bank1_Start;
+1000172c:	4b12      	ldr	r3, [pc, #72]	; (10001778 <_sbrk+0x5c>)
+1000172e:	4a13      	ldr	r2, [pc, #76]	; (1000177c <_sbrk+0x60>)
+10001730:	601a      	str	r2, [r3, #0]
+  }
+
+  base = heap_ptr;
+10001732:	4b11      	ldr	r3, [pc, #68]	; (10001778 <_sbrk+0x5c>)
+10001734:	681b      	ldr	r3, [r3, #0]
+10001736:	60fb      	str	r3, [r7, #12]
+
+  /* heap word alignment */
+  nbytes = (nbytes + 3) & ~0x3U;
+10001738:	687b      	ldr	r3, [r7, #4]
+1000173a:	3303      	adds	r3, #3
+1000173c:	2203      	movs	r2, #3
+1000173e:	4393      	bics	r3, r2
+10001740:	607b      	str	r3, [r7, #4]
+  if ((caddr_t)&Heap_Bank1_End > (heap_ptr + nbytes))
+10001742:	4b0d      	ldr	r3, [pc, #52]	; (10001778 <_sbrk+0x5c>)
+10001744:	681a      	ldr	r2, [r3, #0]
+10001746:	687b      	ldr	r3, [r7, #4]
+10001748:	18d2      	adds	r2, r2, r3
+1000174a:	4b0d      	ldr	r3, [pc, #52]	; (10001780 <_sbrk+0x64>)
+1000174c:	429a      	cmp	r2, r3
+1000174e:	d207      	bcs.n	10001760 <_sbrk+0x44>
+  {
+    heap_ptr += nbytes;
+10001750:	4b09      	ldr	r3, [pc, #36]	; (10001778 <_sbrk+0x5c>)
+10001752:	681a      	ldr	r2, [r3, #0]
+10001754:	687b      	ldr	r3, [r7, #4]
+10001756:	18d2      	adds	r2, r2, r3
+10001758:	4b07      	ldr	r3, [pc, #28]	; (10001778 <_sbrk+0x5c>)
+1000175a:	601a      	str	r2, [r3, #0]
+    return (base);
+1000175c:	68fb      	ldr	r3, [r7, #12]
+1000175e:	e006      	b.n	1000176e <_sbrk+0x52>
+  }
+  else
+  {
+    /* Heap overflow */
+    errno = ENOMEM;
+10001760:	f000 fc36 	bl	10001fd0 <__errno>
+10001764:	1c03      	adds	r3, r0, #0
+10001766:	220c      	movs	r2, #12
+10001768:	601a      	str	r2, [r3, #0]
+    return ((caddr_t)-1);
+1000176a:	2301      	movs	r3, #1
+1000176c:	425b      	negs	r3, r3
+  }
+}
+1000176e:	1c18      	adds	r0, r3, #0
+10001770:	46bd      	mov	sp, r7
+10001772:	b004      	add	sp, #16
+10001774:	bd80      	pop	{r7, pc}
+10001776:	46c0      	nop			; (mov r8, r8)
+10001778:	200005bc 	.word	0x200005bc
+1000177c:	20000700 	.word	0x20000700
+10001780:	20003ffc 	.word	0x20003ffc
+
+10001784 <_init>:
+
+/* Init */
+void _init(void)
+{}
+10001784:	b580      	push	{r7, lr}
+10001786:	af00      	add	r7, sp, #0
+10001788:	46bd      	mov	sp, r7
+1000178a:	bd80      	pop	{r7, pc}
+
+1000178c <__NVIC_SetPriority>:
+  \param [in]      IRQn  Interrupt number.
+  \param [in]  priority  Priority to set.
+  \note    The priority cannot be set for every processor exception.
+ */
+__STATIC_INLINE void __NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
+{
+1000178c:	b5b0      	push	{r4, r5, r7, lr}
+1000178e:	b082      	sub	sp, #8
+10001790:	af00      	add	r7, sp, #0
+10001792:	1c02      	adds	r2, r0, #0
+10001794:	6039      	str	r1, [r7, #0]
+10001796:	1dfb      	adds	r3, r7, #7
+10001798:	701a      	strb	r2, [r3, #0]
+  if ((int32_t)(IRQn) >= 0)
+1000179a:	1dfb      	adds	r3, r7, #7
+1000179c:	781b      	ldrb	r3, [r3, #0]
+1000179e:	2b7f      	cmp	r3, #127	; 0x7f
+100017a0:	d827      	bhi.n	100017f2 <__NVIC_SetPriority+0x66>
+  {
+    NVIC->IP[_IP_IDX(IRQn)]  = ((uint32_t)(NVIC->IP[_IP_IDX(IRQn)]  & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+100017a2:	4c2d      	ldr	r4, [pc, #180]	; (10001858 <__NVIC_SetPriority+0xcc>)
+100017a4:	1dfb      	adds	r3, r7, #7
+100017a6:	781b      	ldrb	r3, [r3, #0]
+100017a8:	b25b      	sxtb	r3, r3
+100017aa:	089b      	lsrs	r3, r3, #2
+100017ac:	492a      	ldr	r1, [pc, #168]	; (10001858 <__NVIC_SetPriority+0xcc>)
+100017ae:	1dfa      	adds	r2, r7, #7
+100017b0:	7812      	ldrb	r2, [r2, #0]
+100017b2:	b252      	sxtb	r2, r2
+100017b4:	0892      	lsrs	r2, r2, #2
+100017b6:	32c0      	adds	r2, #192	; 0xc0
+100017b8:	0092      	lsls	r2, r2, #2
+100017ba:	5852      	ldr	r2, [r2, r1]
+100017bc:	1df9      	adds	r1, r7, #7
+100017be:	7809      	ldrb	r1, [r1, #0]
+100017c0:	1c08      	adds	r0, r1, #0
+100017c2:	2103      	movs	r1, #3
+100017c4:	4001      	ands	r1, r0
+100017c6:	00c9      	lsls	r1, r1, #3
+100017c8:	1c08      	adds	r0, r1, #0
+100017ca:	21ff      	movs	r1, #255	; 0xff
+100017cc:	4081      	lsls	r1, r0
+100017ce:	43c9      	mvns	r1, r1
+100017d0:	4011      	ands	r1, r2
+       (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+100017d2:	683a      	ldr	r2, [r7, #0]
+100017d4:	0192      	lsls	r2, r2, #6
+100017d6:	20ff      	movs	r0, #255	; 0xff
+100017d8:	4002      	ands	r2, r0
+100017da:	1df8      	adds	r0, r7, #7
+100017dc:	7800      	ldrb	r0, [r0, #0]
+100017de:	1c05      	adds	r5, r0, #0
+100017e0:	2003      	movs	r0, #3
+100017e2:	4028      	ands	r0, r5
+100017e4:	00c0      	lsls	r0, r0, #3
+100017e6:	4082      	lsls	r2, r0
+ */
+__STATIC_INLINE void __NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
+{
+  if ((int32_t)(IRQn) >= 0)
+  {
+    NVIC->IP[_IP_IDX(IRQn)]  = ((uint32_t)(NVIC->IP[_IP_IDX(IRQn)]  & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+100017e8:	430a      	orrs	r2, r1
+100017ea:	33c0      	adds	r3, #192	; 0xc0
+100017ec:	009b      	lsls	r3, r3, #2
+100017ee:	511a      	str	r2, [r3, r4]
+100017f0:	e02e      	b.n	10001850 <__NVIC_SetPriority+0xc4>
+       (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+  }
+  else
+  {
+    SCB->SHP[_SHP_IDX(IRQn)] = ((uint32_t)(SCB->SHP[_SHP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+100017f2:	4c1a      	ldr	r4, [pc, #104]	; (1000185c <__NVIC_SetPriority+0xd0>)
+100017f4:	1dfb      	adds	r3, r7, #7
+100017f6:	781b      	ldrb	r3, [r3, #0]
+100017f8:	1c1a      	adds	r2, r3, #0
+100017fa:	230f      	movs	r3, #15
+100017fc:	4013      	ands	r3, r2
+100017fe:	3b08      	subs	r3, #8
+10001800:	0899      	lsrs	r1, r3, #2
+10001802:	4a16      	ldr	r2, [pc, #88]	; (1000185c <__NVIC_SetPriority+0xd0>)
+10001804:	1dfb      	adds	r3, r7, #7
+10001806:	781b      	ldrb	r3, [r3, #0]
+10001808:	1c18      	adds	r0, r3, #0
+1000180a:	230f      	movs	r3, #15
+1000180c:	4003      	ands	r3, r0
+1000180e:	3b08      	subs	r3, #8
+10001810:	089b      	lsrs	r3, r3, #2
+10001812:	3306      	adds	r3, #6
+10001814:	009b      	lsls	r3, r3, #2
+10001816:	18d3      	adds	r3, r2, r3
+10001818:	685b      	ldr	r3, [r3, #4]
+1000181a:	1dfa      	adds	r2, r7, #7
+1000181c:	7812      	ldrb	r2, [r2, #0]
+1000181e:	1c10      	adds	r0, r2, #0
+10001820:	2203      	movs	r2, #3
+10001822:	4002      	ands	r2, r0
+10001824:	00d2      	lsls	r2, r2, #3
+10001826:	1c10      	adds	r0, r2, #0
+10001828:	22ff      	movs	r2, #255	; 0xff
+1000182a:	4082      	lsls	r2, r0
+1000182c:	43d2      	mvns	r2, r2
+1000182e:	401a      	ands	r2, r3
+       (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+10001830:	683b      	ldr	r3, [r7, #0]
+10001832:	019b      	lsls	r3, r3, #6
+10001834:	20ff      	movs	r0, #255	; 0xff
+10001836:	4003      	ands	r3, r0
+10001838:	1df8      	adds	r0, r7, #7
+1000183a:	7800      	ldrb	r0, [r0, #0]
+1000183c:	1c05      	adds	r5, r0, #0
+1000183e:	2003      	movs	r0, #3
+10001840:	4028      	ands	r0, r5
+10001842:	00c0      	lsls	r0, r0, #3
+10001844:	4083      	lsls	r3, r0
+    NVIC->IP[_IP_IDX(IRQn)]  = ((uint32_t)(NVIC->IP[_IP_IDX(IRQn)]  & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+       (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+  }
+  else
+  {
+    SCB->SHP[_SHP_IDX(IRQn)] = ((uint32_t)(SCB->SHP[_SHP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+10001846:	431a      	orrs	r2, r3
+10001848:	1d8b      	adds	r3, r1, #6
+1000184a:	009b      	lsls	r3, r3, #2
+1000184c:	18e3      	adds	r3, r4, r3
+1000184e:	605a      	str	r2, [r3, #4]
+       (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+  }
+}
+10001850:	46bd      	mov	sp, r7
+10001852:	b002      	add	sp, #8
+10001854:	bdb0      	pop	{r4, r5, r7, pc}
+10001856:	46c0      	nop			; (mov r8, r8)
+10001858:	e000e100 	.word	0xe000e100
+1000185c:	e000ed00 	.word	0xe000ed00
+
+10001860 <SysTick_Config>:
+  \note    When the variable <b>__Vendor_SysTickConfig</b> is set to 1, then the
+           function <b>SysTick_Config</b> is not included. In this case, the file <b><i>device</i>.h</b>
+           must contain a vendor-specific implementation of this function.
+ */
+__STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
+{
+10001860:	b580      	push	{r7, lr}
+10001862:	b082      	sub	sp, #8
+10001864:	af00      	add	r7, sp, #0
+10001866:	6078      	str	r0, [r7, #4]
+  if ((ticks - 1UL) > SysTick_LOAD_RELOAD_Msk)
+10001868:	687b      	ldr	r3, [r7, #4]
+1000186a:	3b01      	subs	r3, #1
+1000186c:	4a0c      	ldr	r2, [pc, #48]	; (100018a0 <SysTick_Config+0x40>)
+1000186e:	4293      	cmp	r3, r2
+10001870:	d901      	bls.n	10001876 <SysTick_Config+0x16>
+  {
+    return (1UL);                                                   /* Reload value impossible */
+10001872:	2301      	movs	r3, #1
+10001874:	e010      	b.n	10001898 <SysTick_Config+0x38>
+  }
+
+  SysTick->LOAD  = (uint32_t)(ticks - 1UL);                         /* set reload register */
+10001876:	4b0b      	ldr	r3, [pc, #44]	; (100018a4 <SysTick_Config+0x44>)
+10001878:	687a      	ldr	r2, [r7, #4]
+1000187a:	3a01      	subs	r2, #1
+1000187c:	605a      	str	r2, [r3, #4]
+  NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL); /* set Priority for Systick Interrupt */
+1000187e:	2301      	movs	r3, #1
+10001880:	425b      	negs	r3, r3
+10001882:	1c18      	adds	r0, r3, #0
+10001884:	2103      	movs	r1, #3
+10001886:	f7ff ff81 	bl	1000178c <__NVIC_SetPriority>
+  SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
+1000188a:	4b06      	ldr	r3, [pc, #24]	; (100018a4 <SysTick_Config+0x44>)
+1000188c:	2200      	movs	r2, #0
+1000188e:	609a      	str	r2, [r3, #8]
+  SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
+10001890:	4b04      	ldr	r3, [pc, #16]	; (100018a4 <SysTick_Config+0x44>)
+10001892:	2207      	movs	r2, #7
+10001894:	601a      	str	r2, [r3, #0]
+                   SysTick_CTRL_TICKINT_Msk   |
+                   SysTick_CTRL_ENABLE_Msk;                         /* Enable SysTick IRQ and SysTick Timer */
+  return (0UL);                                                     /* Function successful */
+10001896:	2300      	movs	r3, #0
+}
+10001898:	1c18      	adds	r0, r3, #0
+1000189a:	46bd      	mov	sp, r7
+1000189c:	b002      	add	sp, #8
+1000189e:	bd80      	pop	{r7, pc}
+100018a0:	00ffffff 	.word	0x00ffffff
+100018a4:	e000e010 	.word	0xe000e010
+
+100018a8 <SYSTIMER_lInsertTimerList>:
+**********************************************************************************************************************/
+/*
+ * This function is called to insert a timer into the timer list.
+ */
+static void SYSTIMER_lInsertTimerList(uint32_t tbl_index)
+{
+100018a8:	b590      	push	{r4, r7, lr}
+100018aa:	b087      	sub	sp, #28
+100018ac:	af00      	add	r7, sp, #0
+100018ae:	6078      	str	r0, [r7, #4]
+  SYSTIMER_OBJECT_t *object_ptr;
+  int32_t delta_ticks;
+  int32_t timer_count;
+  bool found_flag = false;
+100018b0:	230f      	movs	r3, #15
+100018b2:	18fb      	adds	r3, r7, r3
+100018b4:	2200      	movs	r2, #0
+100018b6:	701a      	strb	r2, [r3, #0]
+   /* Get timer time */
+  timer_count = (int32_t)g_timer_tbl[tbl_index].count;
+100018b8:	496b      	ldr	r1, [pc, #428]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100018ba:	687a      	ldr	r2, [r7, #4]
+100018bc:	1c13      	adds	r3, r2, #0
+100018be:	00db      	lsls	r3, r3, #3
+100018c0:	189b      	adds	r3, r3, r2
+100018c2:	009b      	lsls	r3, r3, #2
+100018c4:	18cb      	adds	r3, r1, r3
+100018c6:	3318      	adds	r3, #24
+100018c8:	681b      	ldr	r3, [r3, #0]
+100018ca:	60bb      	str	r3, [r7, #8]
+  /* Check if Timer list is NULL */
+  if (NULL == g_timer_list)
+100018cc:	4b67      	ldr	r3, [pc, #412]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+100018ce:	681b      	ldr	r3, [r3, #0]
+100018d0:	2b00      	cmp	r3, #0
+100018d2:	d109      	bne.n	100018e8 <SYSTIMER_lInsertTimerList+0x40>
+  {
+    /* Set this as first Timer */
+    g_timer_list = &g_timer_tbl[tbl_index];
+100018d4:	687a      	ldr	r2, [r7, #4]
+100018d6:	1c13      	adds	r3, r2, #0
+100018d8:	00db      	lsls	r3, r3, #3
+100018da:	189b      	adds	r3, r3, r2
+100018dc:	009b      	lsls	r3, r3, #2
+100018de:	4a62      	ldr	r2, [pc, #392]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100018e0:	189a      	adds	r2, r3, r2
+100018e2:	4b62      	ldr	r3, [pc, #392]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+100018e4:	601a      	str	r2, [r3, #0]
+100018e6:	e0bc      	b.n	10001a62 <SYSTIMER_lInsertTimerList+0x1ba>
+  }
+  /* If not, find the correct place, and insert the specified timer */
+  else
+  {
+    object_ptr = g_timer_list;
+100018e8:	4b60      	ldr	r3, [pc, #384]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+100018ea:	681b      	ldr	r3, [r3, #0]
+100018ec:	617b      	str	r3, [r7, #20]
+    /* Get timer tick */
+    delta_ticks = timer_count;
+100018ee:	68bb      	ldr	r3, [r7, #8]
+100018f0:	613b      	str	r3, [r7, #16]
+    /* Find correct place for inserting the timer */
+    while ((NULL != object_ptr) && (false == found_flag))
+100018f2:	e0aa      	b.n	10001a4a <SYSTIMER_lInsertTimerList+0x1a2>
+    {
+      /* Get timer Count Difference */
+      delta_ticks -= (int32_t)object_ptr->count;
+100018f4:	697b      	ldr	r3, [r7, #20]
+100018f6:	699b      	ldr	r3, [r3, #24]
+100018f8:	1c1a      	adds	r2, r3, #0
+100018fa:	693b      	ldr	r3, [r7, #16]
+100018fc:	1a9b      	subs	r3, r3, r2
+100018fe:	613b      	str	r3, [r7, #16]
+      /* Check for delta ticks < 0 */
+      if (delta_ticks <= 0)
+10001900:	693b      	ldr	r3, [r7, #16]
+10001902:	2b00      	cmp	r3, #0
+10001904:	dc77      	bgt.n	100019f6 <SYSTIMER_lInsertTimerList+0x14e>
+      {
+        /* Check If head item */
+        if (NULL != object_ptr->prev)
+10001906:	697b      	ldr	r3, [r7, #20]
+10001908:	685b      	ldr	r3, [r3, #4]
+1000190a:	2b00      	cmp	r3, #0
+1000190c:	d025      	beq.n	1000195a <SYSTIMER_lInsertTimerList+0xb2>
+        {
+          /* If Insert to list */
+          object_ptr->prev->next = &g_timer_tbl[tbl_index];
+1000190e:	697b      	ldr	r3, [r7, #20]
+10001910:	685a      	ldr	r2, [r3, #4]
+10001912:	6879      	ldr	r1, [r7, #4]
+10001914:	1c0b      	adds	r3, r1, #0
+10001916:	00db      	lsls	r3, r3, #3
+10001918:	185b      	adds	r3, r3, r1
+1000191a:	009b      	lsls	r3, r3, #2
+1000191c:	4952      	ldr	r1, [pc, #328]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+1000191e:	185b      	adds	r3, r3, r1
+10001920:	6013      	str	r3, [r2, #0]
+          g_timer_tbl[tbl_index].prev = object_ptr->prev;
+10001922:	697b      	ldr	r3, [r7, #20]
+10001924:	6859      	ldr	r1, [r3, #4]
+10001926:	4850      	ldr	r0, [pc, #320]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001928:	687a      	ldr	r2, [r7, #4]
+1000192a:	1c13      	adds	r3, r2, #0
+1000192c:	00db      	lsls	r3, r3, #3
+1000192e:	189b      	adds	r3, r3, r2
+10001930:	009b      	lsls	r3, r3, #2
+10001932:	18c3      	adds	r3, r0, r3
+10001934:	6059      	str	r1, [r3, #4]
+          g_timer_tbl[tbl_index].next = object_ptr;
+10001936:	494c      	ldr	r1, [pc, #304]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001938:	687a      	ldr	r2, [r7, #4]
+1000193a:	1c13      	adds	r3, r2, #0
+1000193c:	00db      	lsls	r3, r3, #3
+1000193e:	189b      	adds	r3, r3, r2
+10001940:	009b      	lsls	r3, r3, #2
+10001942:	697a      	ldr	r2, [r7, #20]
+10001944:	505a      	str	r2, [r3, r1]
+          object_ptr->prev = &g_timer_tbl[tbl_index];
+10001946:	687a      	ldr	r2, [r7, #4]
+10001948:	1c13      	adds	r3, r2, #0
+1000194a:	00db      	lsls	r3, r3, #3
+1000194c:	189b      	adds	r3, r3, r2
+1000194e:	009b      	lsls	r3, r3, #2
+10001950:	4a45      	ldr	r2, [pc, #276]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001952:	189a      	adds	r2, r3, r2
+10001954:	697b      	ldr	r3, [r7, #20]
+10001956:	605a      	str	r2, [r3, #4]
+10001958:	e01b      	b.n	10001992 <SYSTIMER_lInsertTimerList+0xea>
+        }
+        else
+        {
+          /* Set Timer as first item */
+          g_timer_tbl[tbl_index].next = g_timer_list;
+1000195a:	4b44      	ldr	r3, [pc, #272]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+1000195c:	6818      	ldr	r0, [r3, #0]
+1000195e:	4942      	ldr	r1, [pc, #264]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001960:	687a      	ldr	r2, [r7, #4]
+10001962:	1c13      	adds	r3, r2, #0
+10001964:	00db      	lsls	r3, r3, #3
+10001966:	189b      	adds	r3, r3, r2
+10001968:	009b      	lsls	r3, r3, #2
+1000196a:	5058      	str	r0, [r3, r1]
+          g_timer_list->prev = &g_timer_tbl[tbl_index];
+1000196c:	4b3f      	ldr	r3, [pc, #252]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+1000196e:	681a      	ldr	r2, [r3, #0]
+10001970:	6879      	ldr	r1, [r7, #4]
+10001972:	1c0b      	adds	r3, r1, #0
+10001974:	00db      	lsls	r3, r3, #3
+10001976:	185b      	adds	r3, r3, r1
+10001978:	009b      	lsls	r3, r3, #2
+1000197a:	493b      	ldr	r1, [pc, #236]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+1000197c:	185b      	adds	r3, r3, r1
+1000197e:	6053      	str	r3, [r2, #4]
+          g_timer_list = &g_timer_tbl[tbl_index];
+10001980:	687a      	ldr	r2, [r7, #4]
+10001982:	1c13      	adds	r3, r2, #0
+10001984:	00db      	lsls	r3, r3, #3
+10001986:	189b      	adds	r3, r3, r2
+10001988:	009b      	lsls	r3, r3, #2
+1000198a:	4a37      	ldr	r2, [pc, #220]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+1000198c:	189a      	adds	r2, r3, r2
+1000198e:	4b37      	ldr	r3, [pc, #220]	; (10001a6c <SYSTIMER_lInsertTimerList+0x1c4>)
+10001990:	601a      	str	r2, [r3, #0]
+        }
+        g_timer_tbl[tbl_index].count = g_timer_tbl[tbl_index].next->count + (uint32_t)delta_ticks;
+10001992:	4935      	ldr	r1, [pc, #212]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001994:	687a      	ldr	r2, [r7, #4]
+10001996:	1c13      	adds	r3, r2, #0
+10001998:	00db      	lsls	r3, r3, #3
+1000199a:	189b      	adds	r3, r3, r2
+1000199c:	009b      	lsls	r3, r3, #2
+1000199e:	585b      	ldr	r3, [r3, r1]
+100019a0:	699a      	ldr	r2, [r3, #24]
+100019a2:	693b      	ldr	r3, [r7, #16]
+100019a4:	18d1      	adds	r1, r2, r3
+100019a6:	4830      	ldr	r0, [pc, #192]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100019a8:	687a      	ldr	r2, [r7, #4]
+100019aa:	1c13      	adds	r3, r2, #0
+100019ac:	00db      	lsls	r3, r3, #3
+100019ae:	189b      	adds	r3, r3, r2
+100019b0:	009b      	lsls	r3, r3, #2
+100019b2:	18c3      	adds	r3, r0, r3
+100019b4:	3318      	adds	r3, #24
+100019b6:	6019      	str	r1, [r3, #0]
+        g_timer_tbl[tbl_index].next->count  -= g_timer_tbl[tbl_index].count;
+100019b8:	492b      	ldr	r1, [pc, #172]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100019ba:	687a      	ldr	r2, [r7, #4]
+100019bc:	1c13      	adds	r3, r2, #0
+100019be:	00db      	lsls	r3, r3, #3
+100019c0:	189b      	adds	r3, r3, r2
+100019c2:	009b      	lsls	r3, r3, #2
+100019c4:	585a      	ldr	r2, [r3, r1]
+100019c6:	4828      	ldr	r0, [pc, #160]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100019c8:	6879      	ldr	r1, [r7, #4]
+100019ca:	1c0b      	adds	r3, r1, #0
+100019cc:	00db      	lsls	r3, r3, #3
+100019ce:	185b      	adds	r3, r3, r1
+100019d0:	009b      	lsls	r3, r3, #2
+100019d2:	581b      	ldr	r3, [r3, r0]
+100019d4:	6998      	ldr	r0, [r3, #24]
+100019d6:	4c24      	ldr	r4, [pc, #144]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+100019d8:	6879      	ldr	r1, [r7, #4]
+100019da:	1c0b      	adds	r3, r1, #0
+100019dc:	00db      	lsls	r3, r3, #3
+100019de:	185b      	adds	r3, r3, r1
+100019e0:	009b      	lsls	r3, r3, #2
+100019e2:	18e3      	adds	r3, r4, r3
+100019e4:	3318      	adds	r3, #24
+100019e6:	681b      	ldr	r3, [r3, #0]
+100019e8:	1ac3      	subs	r3, r0, r3
+100019ea:	6193      	str	r3, [r2, #24]
+        found_flag = true;
+100019ec:	230f      	movs	r3, #15
+100019ee:	18fb      	adds	r3, r7, r3
+100019f0:	2201      	movs	r2, #1
+100019f2:	701a      	strb	r2, [r3, #0]
+100019f4:	e026      	b.n	10001a44 <SYSTIMER_lInsertTimerList+0x19c>
+      }
+      /* Check for last item in list */
+      else
+      {
+        if ((delta_ticks > 0) && (NULL == object_ptr->next))
+100019f6:	693b      	ldr	r3, [r7, #16]
+100019f8:	2b00      	cmp	r3, #0
+100019fa:	dd23      	ble.n	10001a44 <SYSTIMER_lInsertTimerList+0x19c>
+100019fc:	697b      	ldr	r3, [r7, #20]
+100019fe:	681b      	ldr	r3, [r3, #0]
+10001a00:	2b00      	cmp	r3, #0
+10001a02:	d11f      	bne.n	10001a44 <SYSTIMER_lInsertTimerList+0x19c>
+        {
+          /* Yes, insert into */
+          g_timer_tbl[tbl_index].prev = object_ptr;
+10001a04:	4918      	ldr	r1, [pc, #96]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001a06:	687a      	ldr	r2, [r7, #4]
+10001a08:	1c13      	adds	r3, r2, #0
+10001a0a:	00db      	lsls	r3, r3, #3
+10001a0c:	189b      	adds	r3, r3, r2
+10001a0e:	009b      	lsls	r3, r3, #2
+10001a10:	18cb      	adds	r3, r1, r3
+10001a12:	697a      	ldr	r2, [r7, #20]
+10001a14:	605a      	str	r2, [r3, #4]
+          object_ptr->next = &g_timer_tbl[tbl_index];
+10001a16:	687a      	ldr	r2, [r7, #4]
+10001a18:	1c13      	adds	r3, r2, #0
+10001a1a:	00db      	lsls	r3, r3, #3
+10001a1c:	189b      	adds	r3, r3, r2
+10001a1e:	009b      	lsls	r3, r3, #2
+10001a20:	4a11      	ldr	r2, [pc, #68]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001a22:	189a      	adds	r2, r3, r2
+10001a24:	697b      	ldr	r3, [r7, #20]
+10001a26:	601a      	str	r2, [r3, #0]
+          g_timer_tbl[tbl_index].count = (uint32_t)delta_ticks;
+10001a28:	6939      	ldr	r1, [r7, #16]
+10001a2a:	480f      	ldr	r0, [pc, #60]	; (10001a68 <SYSTIMER_lInsertTimerList+0x1c0>)
+10001a2c:	687a      	ldr	r2, [r7, #4]
+10001a2e:	1c13      	adds	r3, r2, #0
+10001a30:	00db      	lsls	r3, r3, #3
+10001a32:	189b      	adds	r3, r3, r2
+10001a34:	009b      	lsls	r3, r3, #2
+10001a36:	18c3      	adds	r3, r0, r3
+10001a38:	3318      	adds	r3, #24
+10001a3a:	6019      	str	r1, [r3, #0]
+          found_flag = true;
+10001a3c:	230f      	movs	r3, #15
+10001a3e:	18fb      	adds	r3, r7, r3
+10001a40:	2201      	movs	r2, #1
+10001a42:	701a      	strb	r2, [r3, #0]
+        }
+      }
+      /* Get the next item in timer list */
+      object_ptr = object_ptr->next;
+10001a44:	697b      	ldr	r3, [r7, #20]
+10001a46:	681b      	ldr	r3, [r3, #0]
+10001a48:	617b      	str	r3, [r7, #20]
+  {
+    object_ptr = g_timer_list;
+    /* Get timer tick */
+    delta_ticks = timer_count;
+    /* Find correct place for inserting the timer */
+    while ((NULL != object_ptr) && (false == found_flag))
+10001a4a:	697b      	ldr	r3, [r7, #20]
+10001a4c:	2b00      	cmp	r3, #0
+10001a4e:	d008      	beq.n	10001a62 <SYSTIMER_lInsertTimerList+0x1ba>
+10001a50:	230f      	movs	r3, #15
+10001a52:	18fb      	adds	r3, r7, r3
+10001a54:	781b      	ldrb	r3, [r3, #0]
+10001a56:	2201      	movs	r2, #1
+10001a58:	4053      	eors	r3, r2
+10001a5a:	b2db      	uxtb	r3, r3
+10001a5c:	2b00      	cmp	r3, #0
+10001a5e:	d000      	beq.n	10001a62 <SYSTIMER_lInsertTimerList+0x1ba>
+10001a60:	e748      	b.n	100018f4 <SYSTIMER_lInsertTimerList+0x4c>
+      }
+      /* Get the next item in timer list */
+      object_ptr = object_ptr->next;
+    }
+  }
+}
+10001a62:	46bd      	mov	sp, r7
+10001a64:	b007      	add	sp, #28
+10001a66:	bd90      	pop	{r4, r7, pc}
+10001a68:	200005dc 	.word	0x200005dc
+10001a6c:	200005c0 	.word	0x200005c0
+
+10001a70 <SYSTIMER_lRemoveTimerList>:
+
+/*
+ * This function is called to remove a timer from the timer list. 
+ */
+static void SYSTIMER_lRemoveTimerList(uint32_t tbl_index)
+{
+10001a70:	b580      	push	{r7, lr}
+10001a72:	b084      	sub	sp, #16
+10001a74:	af00      	add	r7, sp, #0
+10001a76:	6078      	str	r0, [r7, #4]
+  SYSTIMER_OBJECT_t *object_ptr;
+  object_ptr = &g_timer_tbl[tbl_index];
+10001a78:	687a      	ldr	r2, [r7, #4]
+10001a7a:	1c13      	adds	r3, r2, #0
+10001a7c:	00db      	lsls	r3, r3, #3
+10001a7e:	189b      	adds	r3, r3, r2
+10001a80:	009b      	lsls	r3, r3, #2
+10001a82:	4a28      	ldr	r2, [pc, #160]	; (10001b24 <SYSTIMER_lRemoveTimerList+0xb4>)
+10001a84:	189b      	adds	r3, r3, r2
+10001a86:	60fb      	str	r3, [r7, #12]
+  /* Check whether only one timer available */
+  if ((NULL == object_ptr->prev) && (NULL == object_ptr->next ))
+10001a88:	68fb      	ldr	r3, [r7, #12]
+10001a8a:	685b      	ldr	r3, [r3, #4]
+10001a8c:	2b00      	cmp	r3, #0
+10001a8e:	d107      	bne.n	10001aa0 <SYSTIMER_lRemoveTimerList+0x30>
+10001a90:	68fb      	ldr	r3, [r7, #12]
+10001a92:	681b      	ldr	r3, [r3, #0]
+10001a94:	2b00      	cmp	r3, #0
+10001a96:	d103      	bne.n	10001aa0 <SYSTIMER_lRemoveTimerList+0x30>
+  {
+    /* set timer list as NULL */ 
+    g_timer_list = NULL;                  
+10001a98:	4b23      	ldr	r3, [pc, #140]	; (10001b28 <SYSTIMER_lRemoveTimerList+0xb8>)
+10001a9a:	2200      	movs	r2, #0
+10001a9c:	601a      	str	r2, [r3, #0]
+10001a9e:	e03d      	b.n	10001b1c <SYSTIMER_lRemoveTimerList+0xac>
+  }
+  /* Check if the first item in timer list */
+  else if (NULL == object_ptr->prev)
+10001aa0:	68fb      	ldr	r3, [r7, #12]
+10001aa2:	685b      	ldr	r3, [r3, #4]
+10001aa4:	2b00      	cmp	r3, #0
+10001aa6:	d114      	bne.n	10001ad2 <SYSTIMER_lRemoveTimerList+0x62>
+  {
+    /* Remove timer from list, and reset timer list */
+    g_timer_list  = object_ptr->next;
+10001aa8:	68fb      	ldr	r3, [r7, #12]
+10001aaa:	681a      	ldr	r2, [r3, #0]
+10001aac:	4b1e      	ldr	r3, [pc, #120]	; (10001b28 <SYSTIMER_lRemoveTimerList+0xb8>)
+10001aae:	601a      	str	r2, [r3, #0]
+    g_timer_list->prev = NULL;
+10001ab0:	4b1d      	ldr	r3, [pc, #116]	; (10001b28 <SYSTIMER_lRemoveTimerList+0xb8>)
+10001ab2:	681b      	ldr	r3, [r3, #0]
+10001ab4:	2200      	movs	r2, #0
+10001ab6:	605a      	str	r2, [r3, #4]
+    g_timer_list->count += object_ptr->count;
+10001ab8:	4b1b      	ldr	r3, [pc, #108]	; (10001b28 <SYSTIMER_lRemoveTimerList+0xb8>)
+10001aba:	681b      	ldr	r3, [r3, #0]
+10001abc:	4a1a      	ldr	r2, [pc, #104]	; (10001b28 <SYSTIMER_lRemoveTimerList+0xb8>)
+10001abe:	6812      	ldr	r2, [r2, #0]
+10001ac0:	6991      	ldr	r1, [r2, #24]
+10001ac2:	68fa      	ldr	r2, [r7, #12]
+10001ac4:	6992      	ldr	r2, [r2, #24]
+10001ac6:	188a      	adds	r2, r1, r2
+10001ac8:	619a      	str	r2, [r3, #24]
+    object_ptr->next    = NULL;
+10001aca:	68fb      	ldr	r3, [r7, #12]
+10001acc:	2200      	movs	r2, #0
+10001ace:	601a      	str	r2, [r3, #0]
+10001ad0:	e024      	b.n	10001b1c <SYSTIMER_lRemoveTimerList+0xac>
+  }
+  /* Check if the last item in timer list */
+  else if (NULL == object_ptr->next)
+10001ad2:	68fb      	ldr	r3, [r7, #12]
+10001ad4:	681b      	ldr	r3, [r3, #0]
+10001ad6:	2b00      	cmp	r3, #0
+10001ad8:	d107      	bne.n	10001aea <SYSTIMER_lRemoveTimerList+0x7a>
+  {
+    /* Remove timer from list */
+    object_ptr->prev->next = NULL;
+10001ada:	68fb      	ldr	r3, [r7, #12]
+10001adc:	685b      	ldr	r3, [r3, #4]
+10001ade:	2200      	movs	r2, #0
+10001ae0:	601a      	str	r2, [r3, #0]
+    object_ptr->prev = NULL;
+10001ae2:	68fb      	ldr	r3, [r7, #12]
+10001ae4:	2200      	movs	r2, #0
+10001ae6:	605a      	str	r2, [r3, #4]
+10001ae8:	e018      	b.n	10001b1c <SYSTIMER_lRemoveTimerList+0xac>
+  }
+  else                       
+  {
+    /* Remove timer from list */
+    object_ptr->prev->next  =  object_ptr->next;
+10001aea:	68fb      	ldr	r3, [r7, #12]
+10001aec:	685b      	ldr	r3, [r3, #4]
+10001aee:	68fa      	ldr	r2, [r7, #12]
+10001af0:	6812      	ldr	r2, [r2, #0]
+10001af2:	601a      	str	r2, [r3, #0]
+    object_ptr->next->prev  =  object_ptr->prev;
+10001af4:	68fb      	ldr	r3, [r7, #12]
+10001af6:	681b      	ldr	r3, [r3, #0]
+10001af8:	68fa      	ldr	r2, [r7, #12]
+10001afa:	6852      	ldr	r2, [r2, #4]
+10001afc:	605a      	str	r2, [r3, #4]
+    object_ptr->next->count += object_ptr->count;
+10001afe:	68fb      	ldr	r3, [r7, #12]
+10001b00:	681b      	ldr	r3, [r3, #0]
+10001b02:	68fa      	ldr	r2, [r7, #12]
+10001b04:	6812      	ldr	r2, [r2, #0]
+10001b06:	6991      	ldr	r1, [r2, #24]
+10001b08:	68fa      	ldr	r2, [r7, #12]
+10001b0a:	6992      	ldr	r2, [r2, #24]
+10001b0c:	188a      	adds	r2, r1, r2
+10001b0e:	619a      	str	r2, [r3, #24]
+    object_ptr->next = NULL;
+10001b10:	68fb      	ldr	r3, [r7, #12]
+10001b12:	2200      	movs	r2, #0
+10001b14:	601a      	str	r2, [r3, #0]
+    object_ptr->prev = NULL;
+10001b16:	68fb      	ldr	r3, [r7, #12]
+10001b18:	2200      	movs	r2, #0
+10001b1a:	605a      	str	r2, [r3, #4]
+  }
+}
+10001b1c:	46bd      	mov	sp, r7
+10001b1e:	b004      	add	sp, #16
+10001b20:	bd80      	pop	{r7, pc}
+10001b22:	46c0      	nop			; (mov r8, r8)
+10001b24:	200005dc 	.word	0x200005dc
+10001b28:	200005c0 	.word	0x200005c0
+
+10001b2c <SYSTIMER_lTimerHandler>:
+
+/*
+ * Handler function called from SysTick event handler.
+ */
+static void SYSTIMER_lTimerHandler(void)
+{
+10001b2c:	b580      	push	{r7, lr}
+10001b2e:	b082      	sub	sp, #8
+10001b30:	af00      	add	r7, sp, #0
+  SYSTIMER_OBJECT_t *object_ptr;
+  /* Get first item of timer list */
+  object_ptr = g_timer_list;
+10001b32:	4b2f      	ldr	r3, [pc, #188]	; (10001bf0 <SYSTIMER_lTimerHandler+0xc4>)
+10001b34:	681b      	ldr	r3, [r3, #0]
+10001b36:	607b      	str	r3, [r7, #4]
+  while ((NULL != object_ptr) && (0U == object_ptr->count))
+10001b38:	e050      	b.n	10001bdc <SYSTIMER_lTimerHandler+0xb0>
+  {
+    if (true == object_ptr->delete_swtmr)
+10001b3a:	687b      	ldr	r3, [r7, #4]
+10001b3c:	2220      	movs	r2, #32
+10001b3e:	5c9b      	ldrb	r3, [r3, r2]
+10001b40:	2b00      	cmp	r3, #0
+10001b42:	d013      	beq.n	10001b6c <SYSTIMER_lTimerHandler+0x40>
+    {
+      /* Yes, remove this timer from timer list */
+      SYSTIMER_lRemoveTimerList((uint32_t)object_ptr->id);
+10001b44:	687b      	ldr	r3, [r7, #4]
+10001b46:	695b      	ldr	r3, [r3, #20]
+10001b48:	1c18      	adds	r0, r3, #0
+10001b4a:	f7ff ff91 	bl	10001a70 <SYSTIMER_lRemoveTimerList>
+      /* Set timer status as SYSTIMER_STATE_NOT_INITIALIZED */
+      object_ptr->state = SYSTIMER_STATE_NOT_INITIALIZED;
+10001b4e:	687b      	ldr	r3, [r7, #4]
+10001b50:	2200      	movs	r2, #0
+10001b52:	735a      	strb	r2, [r3, #13]
+      /* Release resource which are hold by this timer */
+      g_timer_tracker &= ~(1U << object_ptr->id);
+10001b54:	687b      	ldr	r3, [r7, #4]
+10001b56:	695b      	ldr	r3, [r3, #20]
+10001b58:	1c1a      	adds	r2, r3, #0
+10001b5a:	2301      	movs	r3, #1
+10001b5c:	4093      	lsls	r3, r2
+10001b5e:	43da      	mvns	r2, r3
+10001b60:	4b24      	ldr	r3, [pc, #144]	; (10001bf4 <SYSTIMER_lTimerHandler+0xc8>)
+10001b62:	681b      	ldr	r3, [r3, #0]
+10001b64:	401a      	ands	r2, r3
+10001b66:	4b23      	ldr	r3, [pc, #140]	; (10001bf4 <SYSTIMER_lTimerHandler+0xc8>)
+10001b68:	601a      	str	r2, [r3, #0]
+10001b6a:	e034      	b.n	10001bd6 <SYSTIMER_lTimerHandler+0xaa>
+    }
+    /* Check whether timer is a one shot timer */
+    else if (SYSTIMER_MODE_ONE_SHOT == object_ptr->mode)
+10001b6c:	687b      	ldr	r3, [r7, #4]
+10001b6e:	7b1b      	ldrb	r3, [r3, #12]
+10001b70:	2b00      	cmp	r3, #0
+10001b72:	d112      	bne.n	10001b9a <SYSTIMER_lTimerHandler+0x6e>
+    {
+      if (SYSTIMER_STATE_RUNNING == object_ptr->state)
+10001b74:	687b      	ldr	r3, [r7, #4]
+10001b76:	7b5b      	ldrb	r3, [r3, #13]
+10001b78:	2b01      	cmp	r3, #1
+10001b7a:	d12c      	bne.n	10001bd6 <SYSTIMER_lTimerHandler+0xaa>
+      {
+        /* Yes, remove this timer from timer list */
+        SYSTIMER_lRemoveTimerList((uint32_t)object_ptr->id);
+10001b7c:	687b      	ldr	r3, [r7, #4]
+10001b7e:	695b      	ldr	r3, [r3, #20]
+10001b80:	1c18      	adds	r0, r3, #0
+10001b82:	f7ff ff75 	bl	10001a70 <SYSTIMER_lRemoveTimerList>
+        /* Set timer status as SYSTIMER_STATE_STOPPED */
+        object_ptr->state = SYSTIMER_STATE_STOPPED;
+10001b86:	687b      	ldr	r3, [r7, #4]
+10001b88:	2202      	movs	r2, #2
+10001b8a:	735a      	strb	r2, [r3, #13]
+        /* Call timer callback function */
+        (object_ptr->callback)(object_ptr->args);
+10001b8c:	687b      	ldr	r3, [r7, #4]
+10001b8e:	689a      	ldr	r2, [r3, #8]
+10001b90:	687b      	ldr	r3, [r7, #4]
+10001b92:	691b      	ldr	r3, [r3, #16]
+10001b94:	1c18      	adds	r0, r3, #0
+10001b96:	4790      	blx	r2
+10001b98:	e01d      	b.n	10001bd6 <SYSTIMER_lTimerHandler+0xaa>
+      }
+    }
+    /* Check whether timer is periodic timer */
+    else if (SYSTIMER_MODE_PERIODIC == object_ptr->mode)
+10001b9a:	687b      	ldr	r3, [r7, #4]
+10001b9c:	7b1b      	ldrb	r3, [r3, #12]
+10001b9e:	2b01      	cmp	r3, #1
+10001ba0:	d118      	bne.n	10001bd4 <SYSTIMER_lTimerHandler+0xa8>
+    {
+      if (SYSTIMER_STATE_RUNNING == object_ptr->state)
+10001ba2:	687b      	ldr	r3, [r7, #4]
+10001ba4:	7b5b      	ldrb	r3, [r3, #13]
+10001ba6:	2b01      	cmp	r3, #1
+10001ba8:	d115      	bne.n	10001bd6 <SYSTIMER_lTimerHandler+0xaa>
+      {
+        /* Yes, remove this timer from timer list */
+        SYSTIMER_lRemoveTimerList((uint32_t)object_ptr->id);
+10001baa:	687b      	ldr	r3, [r7, #4]
+10001bac:	695b      	ldr	r3, [r3, #20]
+10001bae:	1c18      	adds	r0, r3, #0
+10001bb0:	f7ff ff5e 	bl	10001a70 <SYSTIMER_lRemoveTimerList>
+        /* Reset timer tick */
+        object_ptr->count = object_ptr->reload;
+10001bb4:	687b      	ldr	r3, [r7, #4]
+10001bb6:	69da      	ldr	r2, [r3, #28]
+10001bb8:	687b      	ldr	r3, [r7, #4]
+10001bba:	619a      	str	r2, [r3, #24]
+        /* Insert timer into timer list */
+        SYSTIMER_lInsertTimerList((uint32_t)object_ptr->id);
+10001bbc:	687b      	ldr	r3, [r7, #4]
+10001bbe:	695b      	ldr	r3, [r3, #20]
+10001bc0:	1c18      	adds	r0, r3, #0
+10001bc2:	f7ff fe71 	bl	100018a8 <SYSTIMER_lInsertTimerList>
+        /* Call timer callback function */
+        (object_ptr->callback)(object_ptr->args);
+10001bc6:	687b      	ldr	r3, [r7, #4]
+10001bc8:	689a      	ldr	r2, [r3, #8]
+10001bca:	687b      	ldr	r3, [r7, #4]
+10001bcc:	691b      	ldr	r3, [r3, #16]
+10001bce:	1c18      	adds	r0, r3, #0
+10001bd0:	4790      	blx	r2
+10001bd2:	e000      	b.n	10001bd6 <SYSTIMER_lTimerHandler+0xaa>
+      }
+    }
+    else
+    {
+      break;
+10001bd4:	e009      	b.n	10001bea <SYSTIMER_lTimerHandler+0xbe>
+    }
+    /* Get first item of timer list */
+    object_ptr = g_timer_list;
+10001bd6:	4b06      	ldr	r3, [pc, #24]	; (10001bf0 <SYSTIMER_lTimerHandler+0xc4>)
+10001bd8:	681b      	ldr	r3, [r3, #0]
+10001bda:	607b      	str	r3, [r7, #4]
+static void SYSTIMER_lTimerHandler(void)
+{
+  SYSTIMER_OBJECT_t *object_ptr;
+  /* Get first item of timer list */
+  object_ptr = g_timer_list;
+  while ((NULL != object_ptr) && (0U == object_ptr->count))
+10001bdc:	687b      	ldr	r3, [r7, #4]
+10001bde:	2b00      	cmp	r3, #0
+10001be0:	d003      	beq.n	10001bea <SYSTIMER_lTimerHandler+0xbe>
+10001be2:	687b      	ldr	r3, [r7, #4]
+10001be4:	699b      	ldr	r3, [r3, #24]
+10001be6:	2b00      	cmp	r3, #0
+10001be8:	d0a7      	beq.n	10001b3a <SYSTIMER_lTimerHandler+0xe>
+      break;
+    }
+    /* Get first item of timer list */
+    object_ptr = g_timer_list;
+  }
+}
+10001bea:	46bd      	mov	sp, r7
+10001bec:	b002      	add	sp, #8
+10001bee:	bd80      	pop	{r7, pc}
+10001bf0:	200005c0 	.word	0x200005c0
+10001bf4:	200005c4 	.word	0x200005c4
+
+10001bf8 <SysTick_Handler>:
+
+/*
+ *  SysTick Event Handler.
+ */
+void SysTick_Handler(void)
+{
+10001bf8:	b580      	push	{r7, lr}
+10001bfa:	b082      	sub	sp, #8
+10001bfc:	af00      	add	r7, sp, #0
+  SYSTIMER_OBJECT_t *object_ptr;
+  object_ptr = g_timer_list;
+10001bfe:	4b0e      	ldr	r3, [pc, #56]	; (10001c38 <SysTick_Handler+0x40>)
+10001c00:	681b      	ldr	r3, [r3, #0]
+10001c02:	607b      	str	r3, [r7, #4]
+  g_systick_count++;
+10001c04:	4b0d      	ldr	r3, [pc, #52]	; (10001c3c <SysTick_Handler+0x44>)
+10001c06:	681b      	ldr	r3, [r3, #0]
+10001c08:	1c5a      	adds	r2, r3, #1
+10001c0a:	4b0c      	ldr	r3, [pc, #48]	; (10001c3c <SysTick_Handler+0x44>)
+10001c0c:	601a      	str	r2, [r3, #0]
+
+  if (NULL != object_ptr)
+10001c0e:	687b      	ldr	r3, [r7, #4]
+10001c10:	2b00      	cmp	r3, #0
+10001c12:	d00e      	beq.n	10001c32 <SysTick_Handler+0x3a>
+  {
+    if (object_ptr->count > 1UL)
+10001c14:	687b      	ldr	r3, [r7, #4]
+10001c16:	699b      	ldr	r3, [r3, #24]
+10001c18:	2b01      	cmp	r3, #1
+10001c1a:	d905      	bls.n	10001c28 <SysTick_Handler+0x30>
+    {
+      object_ptr->count--;
+10001c1c:	687b      	ldr	r3, [r7, #4]
+10001c1e:	699b      	ldr	r3, [r3, #24]
+10001c20:	1e5a      	subs	r2, r3, #1
+10001c22:	687b      	ldr	r3, [r7, #4]
+10001c24:	619a      	str	r2, [r3, #24]
+10001c26:	e004      	b.n	10001c32 <SysTick_Handler+0x3a>
+    }
+    else
+    {
+      object_ptr->count = 0U;
+10001c28:	687b      	ldr	r3, [r7, #4]
+10001c2a:	2200      	movs	r2, #0
+10001c2c:	619a      	str	r2, [r3, #24]
+      SYSTIMER_lTimerHandler();
+10001c2e:	f7ff ff7d 	bl	10001b2c <SYSTIMER_lTimerHandler>
+    }
+  }
+}
+10001c32:	46bd      	mov	sp, r7
+10001c34:	b002      	add	sp, #8
+10001c36:	bd80      	pop	{r7, pc}
+10001c38:	200005c0 	.word	0x200005c0
+10001c3c:	200005c8 	.word	0x200005c8
+
+10001c40 <SYSTIMER_Init>:
+
+/*
+ * Initialization function which initializes the SYSTIMER APP, configures SysTick timer and SysTick exception.
+ */
+SYSTIMER_STATUS_t SYSTIMER_Init(SYSTIMER_t *handle)
+{
+10001c40:	b580      	push	{r7, lr}
+10001c42:	b084      	sub	sp, #16
+10001c44:	af00      	add	r7, sp, #0
+10001c46:	6078      	str	r0, [r7, #4]
+  SYSTIMER_STATUS_t status = SYSTIMER_STATUS_SUCCESS;
+10001c48:	230f      	movs	r3, #15
+10001c4a:	18fb      	adds	r3, r7, r3
+10001c4c:	2200      	movs	r2, #0
+10001c4e:	701a      	strb	r2, [r3, #0]
+  XMC_ASSERT("SYSTIMER_Init: SYSTIMER APP handle pointer uninitialized", (handle != NULL));
+
+  /* Check APP initialization status to ensure whether SYSTIMER_Init called or not, initialize SYSTIMER if
+   * SYSTIMER_Init called first time.
+   */
+  if (false == handle->init_status)
+10001c50:	687b      	ldr	r3, [r7, #4]
+10001c52:	781b      	ldrb	r3, [r3, #0]
+10001c54:	2201      	movs	r2, #1
+10001c56:	4053      	eors	r3, r2
+10001c58:	b2db      	uxtb	r3, r3
+10001c5a:	2b00      	cmp	r3, #0
+10001c5c:	d01f      	beq.n	10001c9e <SYSTIMER_Init+0x5e>
+  {
+    /* Initialize the header of the list */
+    g_timer_list = NULL;
+10001c5e:	4b13      	ldr	r3, [pc, #76]	; (10001cac <SYSTIMER_Init+0x6c>)
+10001c60:	2200      	movs	r2, #0
+10001c62:	601a      	str	r2, [r3, #0]
+    /* Initialize SysTick timer */
+    status = (SYSTIMER_STATUS_t)SysTick_Config((uint32_t)(SYSTIMER_SYSTICK_CLOCK * SYSTIMER_TICK_PERIOD));
+10001c64:	4b12      	ldr	r3, [pc, #72]	; (10001cb0 <SYSTIMER_Init+0x70>)
+10001c66:	1c18      	adds	r0, r3, #0
+10001c68:	f7ff fdfa 	bl	10001860 <SysTick_Config>
+10001c6c:	1c02      	adds	r2, r0, #0
+10001c6e:	230f      	movs	r3, #15
+10001c70:	18fb      	adds	r3, r7, r3
+10001c72:	701a      	strb	r2, [r3, #0]
+
+    if (SYSTIMER_STATUS_FAILURE == status)
+10001c74:	230f      	movs	r3, #15
+10001c76:	18fb      	adds	r3, r7, r3
+10001c78:	781b      	ldrb	r3, [r3, #0]
+10001c7a:	2b01      	cmp	r3, #1
+10001c7c:	d00f      	beq.n	10001c9e <SYSTIMER_Init+0x5e>
+      /* setting of First SW Timer period is always and subpriority value for XMC4000 devices */
+      NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(
+      NVIC_GetPriorityGrouping(), SYSTIMER_PRIORITY, SYSTIMER_SUBPRIORITY));
+#elif (UC_FAMILY == XMC1)
+      /* setting of priority value for XMC1000 devices */
+      NVIC_SetPriority(SysTick_IRQn, SYSTIMER_PRIORITY);
+10001c7e:	2301      	movs	r3, #1
+10001c80:	425b      	negs	r3, r3
+10001c82:	1c18      	adds	r0, r3, #0
+10001c84:	2103      	movs	r1, #3
+10001c86:	f7ff fd81 	bl	1000178c <__NVIC_SetPriority>
+#endif      
+      g_timer_tracker = 0U;
+10001c8a:	4b0a      	ldr	r3, [pc, #40]	; (10001cb4 <SYSTIMER_Init+0x74>)
+10001c8c:	2200      	movs	r2, #0
+10001c8e:	601a      	str	r2, [r3, #0]
+      /* Update the Initialization status of the SYSTIMER APP instance */
+      handle->init_status = true;
+10001c90:	687b      	ldr	r3, [r7, #4]
+10001c92:	2201      	movs	r2, #1
+10001c94:	701a      	strb	r2, [r3, #0]
+      status = SYSTIMER_STATUS_SUCCESS;
+10001c96:	230f      	movs	r3, #15
+10001c98:	18fb      	adds	r3, r7, r3
+10001c9a:	2200      	movs	r2, #0
+10001c9c:	701a      	strb	r2, [r3, #0]
+    }
+  }
+
+  return (status);
+10001c9e:	230f      	movs	r3, #15
+10001ca0:	18fb      	adds	r3, r7, r3
+10001ca2:	781b      	ldrb	r3, [r3, #0]
+}
+10001ca4:	1c18      	adds	r0, r3, #0
+10001ca6:	46bd      	mov	sp, r7
+10001ca8:	b004      	add	sp, #16
+10001caa:	bd80      	pop	{r7, pc}
+10001cac:	200005c0 	.word	0x200005c0
+10001cb0:	00493e00 	.word	0x00493e00
+10001cb4:	200005c4 	.word	0x200005c4
+
+10001cb8 <SYSTIMER_GetTime>:
+
+/*
+ *  API to get the current SysTick time in microsecond.
+ */
+uint32_t SYSTIMER_GetTime(void)
+{
+10001cb8:	b580      	push	{r7, lr}
+10001cba:	af00      	add	r7, sp, #0
+  return (g_systick_count * SYSTIMER_TICK_PERIOD_US);
+10001cbc:	4b03      	ldr	r3, [pc, #12]	; (10001ccc <SYSTIMER_GetTime+0x14>)
+10001cbe:	681b      	ldr	r3, [r3, #0]
+10001cc0:	4a03      	ldr	r2, [pc, #12]	; (10001cd0 <SYSTIMER_GetTime+0x18>)
+10001cc2:	4353      	muls	r3, r2
+}
+10001cc4:	1c18      	adds	r0, r3, #0
+10001cc6:	46bd      	mov	sp, r7
+10001cc8:	bd80      	pop	{r7, pc}
+10001cca:	46c0      	nop			; (mov r8, r8)
+10001ccc:	200005c8 	.word	0x200005c8
+10001cd0:	000186a0 	.word	0x000186a0
+
+10001cd4 <DIGITAL_IO_Init>:
+* @param handler Pointer pointing to APP data structure.
+* @return DIGITAL_IO_STATUS_t DIGITAL_IO APP status.
+*/
+
+DIGITAL_IO_STATUS_t DIGITAL_IO_Init(const DIGITAL_IO_t *const handler)
+{
+10001cd4:	b580      	push	{r7, lr}
+10001cd6:	b082      	sub	sp, #8
+10001cd8:	af00      	add	r7, sp, #0
+10001cda:	6078      	str	r0, [r7, #4]
+  XMC_ASSERT("DIGITAL_IO_Init: handler null pointer", handler != NULL);
+
+  /* Initializes input / output characteristics */
+  XMC_GPIO_Init(handler->gpio_port, handler->gpio_pin, &handler->gpio_config);
+10001cdc:	687b      	ldr	r3, [r7, #4]
+10001cde:	6819      	ldr	r1, [r3, #0]
+10001ce0:	687b      	ldr	r3, [r7, #4]
+10001ce2:	7b1a      	ldrb	r2, [r3, #12]
+10001ce4:	687b      	ldr	r3, [r7, #4]
+10001ce6:	3304      	adds	r3, #4
+10001ce8:	1c08      	adds	r0, r1, #0
+10001cea:	1c11      	adds	r1, r2, #0
+10001cec:	1c1a      	adds	r2, r3, #0
+10001cee:	f7ff fa4b 	bl	10001188 <XMC_GPIO_Init>
+
+  /*Configure hardware port control*/
+  XMC_GPIO_SetHardwareControl(handler->gpio_port, handler->gpio_pin, handler->hwctrl);
+10001cf2:	687b      	ldr	r3, [r7, #4]
+10001cf4:	6819      	ldr	r1, [r3, #0]
+10001cf6:	687b      	ldr	r3, [r7, #4]
+10001cf8:	7b1a      	ldrb	r2, [r3, #12]
+10001cfa:	687b      	ldr	r3, [r7, #4]
+10001cfc:	7b5b      	ldrb	r3, [r3, #13]
+10001cfe:	1c08      	adds	r0, r1, #0
+10001d00:	1c11      	adds	r1, r2, #0
+10001d02:	1c1a      	adds	r2, r3, #0
+10001d04:	f7ff fc82 	bl	1000160c <XMC_GPIO_SetHardwareControl>
+
+  return (DIGITAL_IO_STATUS_OK);
+10001d08:	2300      	movs	r3, #0
+}
+10001d0a:	1c18      	adds	r0, r3, #0
+10001d0c:	46bd      	mov	sp, r7
+10001d0e:	b002      	add	sp, #8
+10001d10:	bd80      	pop	{r7, pc}
+10001d12:	46c0      	nop			; (mov r8, r8)
+
+10001d14 <SystemCoreSetup>:
+{
+  .initialized = false
+};
+ 
+void SystemCoreSetup(void)
+{
+10001d14:	b580      	push	{r7, lr}
+10001d16:	af00      	add	r7, sp, #0
+#if UC_SERIES == XMC14
+  /* Enable Prefetch unit */
+  SCU_GENERAL->PFUCR &= ~SCU_GENERAL_PFUCR_PFUBYP_Msk;
+10001d18:	4b03      	ldr	r3, [pc, #12]	; (10001d28 <SystemCoreSetup+0x14>)
+10001d1a:	4a03      	ldr	r2, [pc, #12]	; (10001d28 <SystemCoreSetup+0x14>)
+10001d1c:	6e92      	ldr	r2, [r2, #104]	; 0x68
+10001d1e:	2101      	movs	r1, #1
+10001d20:	438a      	bics	r2, r1
+10001d22:	669a      	str	r2, [r3, #104]	; 0x68
+#endif
+}
+10001d24:	46bd      	mov	sp, r7
+10001d26:	bd80      	pop	{r7, pc}
+10001d28:	40010000 	.word	0x40010000
+
+10001d2c <CLOCK_XMC1_Init>:
+
+/*
+ * API to initialize the CLOCK_XMC1 APP Interrupts
+ */
+CLOCK_XMC1_STATUS_t CLOCK_XMC1_Init(CLOCK_XMC1_t *handle)
+{
+10001d2c:	b580      	push	{r7, lr}
+10001d2e:	b084      	sub	sp, #16
+10001d30:	af00      	add	r7, sp, #0
+10001d32:	6078      	str	r0, [r7, #4]
+  CLOCK_XMC1_STATUS_t status = CLOCK_XMC1_STATUS_SUCCESS;
+10001d34:	230f      	movs	r3, #15
+10001d36:	18fb      	adds	r3, r7, r3
+10001d38:	2200      	movs	r2, #0
+10001d3a:	701a      	strb	r2, [r3, #0]
+  CLOCK_XMC1_STATUS_t loci_event_status = CLOCK_XMC1_STATUS_SUCCESS;
+10001d3c:	230e      	movs	r3, #14
+10001d3e:	18fb      	adds	r3, r7, r3
+10001d40:	2200      	movs	r2, #0
+10001d42:	701a      	strb	r2, [r3, #0]
+  CLOCK_XMC1_STATUS_t stdbyclkfail_status = CLOCK_XMC1_STATUS_SUCCESS;
+10001d44:	230d      	movs	r3, #13
+10001d46:	18fb      	adds	r3, r7, r3
+10001d48:	2200      	movs	r2, #0
+10001d4a:	701a      	strb	r2, [r3, #0]
+  CLOCK_XMC1_STATUS_t loss_ext_clock_event_status = CLOCK_XMC1_STATUS_SUCCESS;
+10001d4c:	230c      	movs	r3, #12
+10001d4e:	18fb      	adds	r3, r7, r3
+10001d50:	2200      	movs	r2, #0
+10001d52:	701a      	strb	r2, [r3, #0]
+  CLOCK_XMC1_STATUS_t dco1_out_sync_status = CLOCK_XMC1_STATUS_SUCCESS;
+10001d54:	230b      	movs	r3, #11
+10001d56:	18fb      	adds	r3, r7, r3
+10001d58:	2200      	movs	r2, #0
+10001d5a:	701a      	strb	r2, [r3, #0]
+
+  XMC_ASSERT("CLOCK_XMC1_Init: CLOCK_XMC1 APP handle pointer uninitialized", (handle != NULL));
+
+  if (handle->init_status == false)
+10001d5c:	687b      	ldr	r3, [r7, #4]
+10001d5e:	781b      	ldrb	r3, [r3, #0]
+10001d60:	2201      	movs	r2, #1
+10001d62:	4053      	eors	r3, r2
+10001d64:	b2db      	uxtb	r3, r3
+10001d66:	2b00      	cmp	r3, #0
+10001d68:	d01b      	beq.n	10001da2 <CLOCK_XMC1_Init+0x76>
+
+#endif
+    }
+
+#endif
+    status = (CLOCK_XMC1_STATUS_t)(((uint32_t)loci_event_status) | ((uint32_t)stdbyclkfail_status) |
+10001d6a:	230e      	movs	r3, #14
+10001d6c:	18fa      	adds	r2, r7, r3
+10001d6e:	230d      	movs	r3, #13
+10001d70:	18fb      	adds	r3, r7, r3
+10001d72:	7812      	ldrb	r2, [r2, #0]
+10001d74:	781b      	ldrb	r3, [r3, #0]
+10001d76:	4313      	orrs	r3, r2
+10001d78:	b2da      	uxtb	r2, r3
+10001d7a:	230c      	movs	r3, #12
+10001d7c:	18fb      	adds	r3, r7, r3
+10001d7e:	781b      	ldrb	r3, [r3, #0]
+10001d80:	4313      	orrs	r3, r2
+10001d82:	b2d9      	uxtb	r1, r3
+10001d84:	230f      	movs	r3, #15
+10001d86:	18fb      	adds	r3, r7, r3
+10001d88:	220b      	movs	r2, #11
+10001d8a:	18ba      	adds	r2, r7, r2
+10001d8c:	7812      	ldrb	r2, [r2, #0]
+10001d8e:	430a      	orrs	r2, r1
+10001d90:	701a      	strb	r2, [r3, #0]
+    		                       ((uint32_t)loss_ext_clock_event_status) | ((uint32_t)dco1_out_sync_status));
+    if (CLOCK_XMC1_STATUS_SUCCESS == status)
+10001d92:	230f      	movs	r3, #15
+10001d94:	18fb      	adds	r3, r7, r3
+10001d96:	781b      	ldrb	r3, [r3, #0]
+10001d98:	2b00      	cmp	r3, #0
+10001d9a:	d102      	bne.n	10001da2 <CLOCK_XMC1_Init+0x76>
+    {
+      handle->init_status = true;
+10001d9c:	687b      	ldr	r3, [r7, #4]
+10001d9e:	2201      	movs	r2, #1
+10001da0:	701a      	strb	r2, [r3, #0]
+    }
+  }
+  return (status);
+10001da2:	230f      	movs	r3, #15
+10001da4:	18fb      	adds	r3, r7, r3
+10001da6:	781b      	ldrb	r3, [r3, #0]
+}
+10001da8:	1c18      	adds	r0, r3, #0
+10001daa:	46bd      	mov	sp, r7
+10001dac:	b004      	add	sp, #16
+10001dae:	bd80      	pop	{r7, pc}
+
+10001db0 <SystemCoreClockSetup>:
+
+/**********************************************************************************************************************
+* API IMPLEMENTATION
+**********************************************************************************************************************/
+void SystemCoreClockSetup(void)
+{
+10001db0:	b590      	push	{r4, r7, lr}
+10001db2:	b085      	sub	sp, #20
+10001db4:	af00      	add	r7, sp, #0
+/* LOCAL DATA STRUCTURES */
+const XMC_SCU_CLOCK_CONFIG_t CLOCK_XMC1_0_CONFIG =
+10001db6:	1c3b      	adds	r3, r7, #0
+10001db8:	4a05      	ldr	r2, [pc, #20]	; (10001dd0 <SystemCoreClockSetup+0x20>)
+10001dba:	ca13      	ldmia	r2!, {r0, r1, r4}
+10001dbc:	c313      	stmia	r3!, {r0, r1, r4}
+10001dbe:	6812      	ldr	r2, [r2, #0]
+10001dc0:	601a      	str	r2, [r3, #0]
+  .osclp_mode = XMC_SCU_CLOCK_OSCLP_MODE_DISABLED
+
+};
+
+  /* Configure FDIV, IDIV, PCLKSEL dividers*/
+  XMC_SCU_CLOCK_Init(&CLOCK_XMC1_0_CONFIG);
+10001dc2:	1c3b      	adds	r3, r7, #0
+10001dc4:	1c18      	adds	r0, r3, #0
+10001dc6:	f7ff fab7 	bl	10001338 <XMC_SCU_CLOCK_Init>
+}
+10001dca:	46bd      	mov	sp, r7
+10001dcc:	b005      	add	sp, #20
+10001dce:	bd90      	pop	{r4, r7, pc}
+10001dd0:	1000221c 	.word	0x1000221c
+
+10001dd4 <DAVE_Init>:
+ * @param[in]  None
+ *
+ * @return  DAVE_STATUS_t <BR>
+ ******************************************************************************/
+__WEAK DAVE_STATUS_t DAVE_Init(void)
+{
+10001dd4:	b590      	push	{r4, r7, lr}
+10001dd6:	b083      	sub	sp, #12
+10001dd8:	af00      	add	r7, sp, #0
+  DAVE_STATUS_t init_status;
+  
+  init_status = DAVE_STATUS_SUCCESS;
+10001dda:	1dfb      	adds	r3, r7, #7
+10001ddc:	2200      	movs	r2, #0
+10001dde:	701a      	strb	r2, [r3, #0]
+     /** @Initialization of APPs Init Functions */
+     init_status = (DAVE_STATUS_t)CLOCK_XMC1_Init(&CLOCK_XMC1_0);
+10001de0:	1dfc      	adds	r4, r7, #7
+10001de2:	4b21      	ldr	r3, [pc, #132]	; (10001e68 <DAVE_Init+0x94>)
+10001de4:	1c18      	adds	r0, r3, #0
+10001de6:	f7ff ffa1 	bl	10001d2c <CLOCK_XMC1_Init>
+10001dea:	1c03      	adds	r3, r0, #0
+10001dec:	7023      	strb	r3, [r4, #0]
+
+  if (init_status == DAVE_STATUS_SUCCESS)
+10001dee:	1dfb      	adds	r3, r7, #7
+10001df0:	781b      	ldrb	r3, [r3, #0]
+10001df2:	2b00      	cmp	r3, #0
+10001df4:	d106      	bne.n	10001e04 <DAVE_Init+0x30>
+  {
+	 /**  Initialization of DIGITAL_IO APP instance LED1 */
+	 init_status = (DAVE_STATUS_t)DIGITAL_IO_Init(&LED1); 
+10001df6:	1dfc      	adds	r4, r7, #7
+10001df8:	4b1c      	ldr	r3, [pc, #112]	; (10001e6c <DAVE_Init+0x98>)
+10001dfa:	1c18      	adds	r0, r3, #0
+10001dfc:	f7ff ff6a 	bl	10001cd4 <DIGITAL_IO_Init>
+10001e00:	1c03      	adds	r3, r0, #0
+10001e02:	7023      	strb	r3, [r4, #0]
+   } 
+  if (init_status == DAVE_STATUS_SUCCESS)
+10001e04:	1dfb      	adds	r3, r7, #7
+10001e06:	781b      	ldrb	r3, [r3, #0]
+10001e08:	2b00      	cmp	r3, #0
+10001e0a:	d106      	bne.n	10001e1a <DAVE_Init+0x46>
+  {
+	 /**  Initialization of DIGITAL_IO APP instance LED2 */
+	 init_status = (DAVE_STATUS_t)DIGITAL_IO_Init(&LED2); 
+10001e0c:	1dfc      	adds	r4, r7, #7
+10001e0e:	4b18      	ldr	r3, [pc, #96]	; (10001e70 <DAVE_Init+0x9c>)
+10001e10:	1c18      	adds	r0, r3, #0
+10001e12:	f7ff ff5f 	bl	10001cd4 <DIGITAL_IO_Init>
+10001e16:	1c03      	adds	r3, r0, #0
+10001e18:	7023      	strb	r3, [r4, #0]
+   } 
+  if (init_status == DAVE_STATUS_SUCCESS)
+10001e1a:	1dfb      	adds	r3, r7, #7
+10001e1c:	781b      	ldrb	r3, [r3, #0]
+10001e1e:	2b00      	cmp	r3, #0
+10001e20:	d106      	bne.n	10001e30 <DAVE_Init+0x5c>
+  {
+	 /**  Initialization of DIGITAL_IO APP instance LED3 */
+	 init_status = (DAVE_STATUS_t)DIGITAL_IO_Init(&LED3); 
+10001e22:	1dfc      	adds	r4, r7, #7
+10001e24:	4b13      	ldr	r3, [pc, #76]	; (10001e74 <DAVE_Init+0xa0>)
+10001e26:	1c18      	adds	r0, r3, #0
+10001e28:	f7ff ff54 	bl	10001cd4 <DIGITAL_IO_Init>
+10001e2c:	1c03      	adds	r3, r0, #0
+10001e2e:	7023      	strb	r3, [r4, #0]
+   } 
+  if (init_status == DAVE_STATUS_SUCCESS)
+10001e30:	1dfb      	adds	r3, r7, #7
+10001e32:	781b      	ldrb	r3, [r3, #0]
+10001e34:	2b00      	cmp	r3, #0
+10001e36:	d106      	bne.n	10001e46 <DAVE_Init+0x72>
+  {
+	 /**  Initialization of DIGITAL_IO APP instance LED4 */
+	 init_status = (DAVE_STATUS_t)DIGITAL_IO_Init(&LED4); 
+10001e38:	1dfc      	adds	r4, r7, #7
+10001e3a:	4b0f      	ldr	r3, [pc, #60]	; (10001e78 <DAVE_Init+0xa4>)
+10001e3c:	1c18      	adds	r0, r3, #0
+10001e3e:	f7ff ff49 	bl	10001cd4 <DIGITAL_IO_Init>
+10001e42:	1c03      	adds	r3, r0, #0
+10001e44:	7023      	strb	r3, [r4, #0]
+   } 
+  if (init_status == DAVE_STATUS_SUCCESS)
+10001e46:	1dfb      	adds	r3, r7, #7
+10001e48:	781b      	ldrb	r3, [r3, #0]
+10001e4a:	2b00      	cmp	r3, #0
+10001e4c:	d106      	bne.n	10001e5c <DAVE_Init+0x88>
+  {
+	 /**  Initialization of SYSTIMER APP instance SYSTIMER_0 */
+	 init_status = (DAVE_STATUS_t)SYSTIMER_Init(&SYSTIMER_0); 
+10001e4e:	1dfc      	adds	r4, r7, #7
+10001e50:	4b0a      	ldr	r3, [pc, #40]	; (10001e7c <DAVE_Init+0xa8>)
+10001e52:	1c18      	adds	r0, r3, #0
+10001e54:	f7ff fef4 	bl	10001c40 <SYSTIMER_Init>
+10001e58:	1c03      	adds	r3, r0, #0
+10001e5a:	7023      	strb	r3, [r4, #0]
+   }  
+  return init_status;
+10001e5c:	1dfb      	adds	r3, r7, #7
+10001e5e:	781b      	ldrb	r3, [r3, #0]
+} /**  End of function DAVE_Init */
+10001e60:	1c18      	adds	r0, r3, #0
+10001e62:	46bd      	mov	sp, r7
+10001e64:	b003      	add	sp, #12
+10001e66:	bd90      	pop	{r4, r7, pc}
+10001e68:	200005d0 	.word	0x200005d0
+10001e6c:	100021dc 	.word	0x100021dc
+10001e70:	100021ec 	.word	0x100021ec
+10001e74:	100021fc 	.word	0x100021fc
+10001e78:	1000220c 	.word	0x1000220c
+10001e7c:	200005cc 	.word	0x200005cc
+
+10001e80 <XMC_GPIO_SetOutputHigh>:
+ * Register Pn_OMR is virtual and does not contain any flip-flop. A read action delivers the value of 0.
+ *
+ */
+
+__STATIC_INLINE void XMC_GPIO_SetOutputHigh(XMC_GPIO_PORT_t *const port, const uint8_t pin)
+{
+10001e80:	b580      	push	{r7, lr}
+10001e82:	b082      	sub	sp, #8
+10001e84:	af00      	add	r7, sp, #0
+10001e86:	6078      	str	r0, [r7, #4]
+10001e88:	1c0a      	adds	r2, r1, #0
+10001e8a:	1cfb      	adds	r3, r7, #3
+10001e8c:	701a      	strb	r2, [r3, #0]
+  XMC_ASSERT("XMC_GPIO_SetOutputHigh: Invalid port", XMC_GPIO_CHECK_OUTPUT_PORT(port));
+
+  port->OMR = (uint32_t)0x1U << pin;
+10001e8e:	1cfb      	adds	r3, r7, #3
+10001e90:	781b      	ldrb	r3, [r3, #0]
+10001e92:	2201      	movs	r2, #1
+10001e94:	409a      	lsls	r2, r3
+10001e96:	687b      	ldr	r3, [r7, #4]
+10001e98:	605a      	str	r2, [r3, #4]
+}
+10001e9a:	46bd      	mov	sp, r7
+10001e9c:	b002      	add	sp, #8
+10001e9e:	bd80      	pop	{r7, pc}
+
+10001ea0 <XMC_GPIO_SetOutputLow>:
+ * Register Pn_OMR is virtual and does not contain any flip-flop. A read action delivers the value of 0.\n
+ *
+ */
+
+__STATIC_INLINE void XMC_GPIO_SetOutputLow(XMC_GPIO_PORT_t *const port, const uint8_t pin)
+{
+10001ea0:	b580      	push	{r7, lr}
+10001ea2:	b082      	sub	sp, #8
+10001ea4:	af00      	add	r7, sp, #0
+10001ea6:	6078      	str	r0, [r7, #4]
+10001ea8:	1c0a      	adds	r2, r1, #0
+10001eaa:	1cfb      	adds	r3, r7, #3
+10001eac:	701a      	strb	r2, [r3, #0]
+  XMC_ASSERT("XMC_GPIO_SetOutputLow: Invalid port", XMC_GPIO_CHECK_OUTPUT_PORT(port));
+
+  port->OMR = 0x10000U << pin;
+10001eae:	1cfb      	adds	r3, r7, #3
+10001eb0:	781b      	ldrb	r3, [r3, #0]
+10001eb2:	2280      	movs	r2, #128	; 0x80
+10001eb4:	0252      	lsls	r2, r2, #9
+10001eb6:	409a      	lsls	r2, r3
+10001eb8:	687b      	ldr	r3, [r7, #4]
+10001eba:	605a      	str	r2, [r3, #4]
+}
+10001ebc:	46bd      	mov	sp, r7
+10001ebe:	b002      	add	sp, #8
+10001ec0:	bd80      	pop	{r7, pc}
+10001ec2:	46c0      	nop			; (mov r8, r8)
+
+10001ec4 <DIGITAL_IO_SetOutputHigh>:
+* }
+*  @endcode
+*/
+
+__STATIC_INLINE void DIGITAL_IO_SetOutputHigh(const DIGITAL_IO_t *const handler)
+{
+10001ec4:	b580      	push	{r7, lr}
+10001ec6:	b082      	sub	sp, #8
+10001ec8:	af00      	add	r7, sp, #0
+10001eca:	6078      	str	r0, [r7, #4]
+  XMC_ASSERT("DIGITAL_IO_SetOutputHigh: handler null pointer", handler != NULL);
+  XMC_GPIO_SetOutputHigh(handler->gpio_port, handler->gpio_pin);
+10001ecc:	687b      	ldr	r3, [r7, #4]
+10001ece:	681a      	ldr	r2, [r3, #0]
+10001ed0:	687b      	ldr	r3, [r7, #4]
+10001ed2:	7b1b      	ldrb	r3, [r3, #12]
+10001ed4:	1c10      	adds	r0, r2, #0
+10001ed6:	1c19      	adds	r1, r3, #0
+10001ed8:	f7ff ffd2 	bl	10001e80 <XMC_GPIO_SetOutputHigh>
+}
+10001edc:	46bd      	mov	sp, r7
+10001ede:	b002      	add	sp, #8
+10001ee0:	bd80      	pop	{r7, pc}
+10001ee2:	46c0      	nop			; (mov r8, r8)
+
+10001ee4 <DIGITAL_IO_SetOutputLow>:
+* }
+*  @endcode
+*/
+
+__STATIC_INLINE void DIGITAL_IO_SetOutputLow(const DIGITAL_IO_t *const handler)
+{
+10001ee4:	b580      	push	{r7, lr}
+10001ee6:	b082      	sub	sp, #8
+10001ee8:	af00      	add	r7, sp, #0
+10001eea:	6078      	str	r0, [r7, #4]
+  XMC_ASSERT("DIGITAL_IO_SetOutputLow: handler null pointer", handler != NULL);
+  XMC_GPIO_SetOutputLow(handler->gpio_port,handler->gpio_pin);
+10001eec:	687b      	ldr	r3, [r7, #4]
+10001eee:	681a      	ldr	r2, [r3, #0]
+10001ef0:	687b      	ldr	r3, [r7, #4]
+10001ef2:	7b1b      	ldrb	r3, [r3, #12]
+10001ef4:	1c10      	adds	r0, r2, #0
+10001ef6:	1c19      	adds	r1, r3, #0
+10001ef8:	f7ff ffd2 	bl	10001ea0 <XMC_GPIO_SetOutputLow>
+}
+10001efc:	46bd      	mov	sp, r7
+10001efe:	b002      	add	sp, #8
+10001f00:	bd80      	pop	{r7, pc}
+10001f02:	46c0      	nop			; (mov r8, r8)
+
+10001f04 <delay>:
+#include <DAVE.h>
+#include <stdlib.h>
+
+
+void delay(uint32_t usec) {
+10001f04:	b580      	push	{r7, lr}
+10001f06:	b084      	sub	sp, #16
+10001f08:	af00      	add	r7, sp, #0
+10001f0a:	6078      	str	r0, [r7, #4]
+
+    uint32_t start = SYSTIMER_GetTime();
+10001f0c:	f7ff fed4 	bl	10001cb8 <SYSTIMER_GetTime>
+10001f10:	1c03      	adds	r3, r0, #0
+10001f12:	60fb      	str	r3, [r7, #12]
+    while (SYSTIMER_GetTime() - start < usec);
+10001f14:	46c0      	nop			; (mov r8, r8)
+10001f16:	f7ff fecf 	bl	10001cb8 <SYSTIMER_GetTime>
+10001f1a:	1c02      	adds	r2, r0, #0
+10001f1c:	68fb      	ldr	r3, [r7, #12]
+10001f1e:	1ad2      	subs	r2, r2, r3
+10001f20:	687b      	ldr	r3, [r7, #4]
+10001f22:	429a      	cmp	r2, r3
+10001f24:	d3f7      	bcc.n	10001f16 <delay+0x12>
+}
+10001f26:	46bd      	mov	sp, r7
+10001f28:	b004      	add	sp, #16
+10001f2a:	bd80      	pop	{r7, pc}
+
+10001f2c <main>:
+
+int main(void) {
+10001f2c:	b580      	push	{r7, lr}
+10001f2e:	b082      	sub	sp, #8
+10001f30:	af00      	add	r7, sp, #0
+    DAVE_Init();
+10001f32:	f7ff ff4f 	bl	10001dd4 <DAVE_Init>
+
+    while (1) {
+
+        uint8_t result = (rand() % 6) + 1;
+10001f36:	f000 f877 	bl	10002028 <rand>
+10001f3a:	1c03      	adds	r3, r0, #0
+10001f3c:	1c18      	adds	r0, r3, #0
+10001f3e:	2106      	movs	r1, #6
+10001f40:	f7ff fbb2 	bl	100016a8 <__aeabi_idivmod>
+10001f44:	1c0b      	adds	r3, r1, #0
+10001f46:	b2da      	uxtb	r2, r3
+10001f48:	1dfb      	adds	r3, r7, #7
+10001f4a:	3201      	adds	r2, #1
+10001f4c:	701a      	strb	r2, [r3, #0]
+
+
+        DIGITAL_IO_SetOutputHigh(&LED1);
+10001f4e:	4b1b      	ldr	r3, [pc, #108]	; (10001fbc <main+0x90>)
+10001f50:	1c18      	adds	r0, r3, #0
+10001f52:	f7ff ffb7 	bl	10001ec4 <DIGITAL_IO_SetOutputHigh>
+        DIGITAL_IO_SetOutputHigh(&LED2);
+10001f56:	4b1a      	ldr	r3, [pc, #104]	; (10001fc0 <main+0x94>)
+10001f58:	1c18      	adds	r0, r3, #0
+10001f5a:	f7ff ffb3 	bl	10001ec4 <DIGITAL_IO_SetOutputHigh>
+        DIGITAL_IO_SetOutputHigh(&LED3);
+10001f5e:	4b19      	ldr	r3, [pc, #100]	; (10001fc4 <main+0x98>)
+10001f60:	1c18      	adds	r0, r3, #0
+10001f62:	f7ff ffaf 	bl	10001ec4 <DIGITAL_IO_SetOutputHigh>
+        DIGITAL_IO_SetOutputHigh(&LED4);
+10001f66:	4b18      	ldr	r3, [pc, #96]	; (10001fc8 <main+0x9c>)
+10001f68:	1c18      	adds	r0, r3, #0
+10001f6a:	f7ff ffab 	bl	10001ec4 <DIGITAL_IO_SetOutputHigh>
+
+
+
+        switch (result) {
+10001f6e:	1dfb      	adds	r3, r7, #7
+10001f70:	781b      	ldrb	r3, [r3, #0]
+10001f72:	2b02      	cmp	r3, #2
+10001f74:	d00d      	beq.n	10001f92 <main+0x66>
+10001f76:	dc02      	bgt.n	10001f7e <main+0x52>
+10001f78:	2b01      	cmp	r3, #1
+10001f7a:	d005      	beq.n	10001f88 <main+0x5c>
+            case 4:
+                DIGITAL_IO_SetOutputLow(&LED4);
+                break;
+
+            default:
+                break;
+10001f7c:	e018      	b.n	10001fb0 <main+0x84>
+        DIGITAL_IO_SetOutputHigh(&LED3);
+        DIGITAL_IO_SetOutputHigh(&LED4);
+
+
+
+        switch (result) {
+10001f7e:	2b03      	cmp	r3, #3
+10001f80:	d00c      	beq.n	10001f9c <main+0x70>
+10001f82:	2b04      	cmp	r3, #4
+10001f84:	d00f      	beq.n	10001fa6 <main+0x7a>
+            case 4:
+                DIGITAL_IO_SetOutputLow(&LED4);
+                break;
+
+            default:
+                break;
+10001f86:	e013      	b.n	10001fb0 <main+0x84>
+
+
+
+        switch (result) {
+            case 1:
+                DIGITAL_IO_SetOutputLow(&LED1);
+10001f88:	4b0c      	ldr	r3, [pc, #48]	; (10001fbc <main+0x90>)
+10001f8a:	1c18      	adds	r0, r3, #0
+10001f8c:	f7ff ffaa 	bl	10001ee4 <DIGITAL_IO_SetOutputLow>
+                break;
+10001f90:	e00e      	b.n	10001fb0 <main+0x84>
+            case 2:
+                DIGITAL_IO_SetOutputLow(&LED2);
+10001f92:	4b0b      	ldr	r3, [pc, #44]	; (10001fc0 <main+0x94>)
+10001f94:	1c18      	adds	r0, r3, #0
+10001f96:	f7ff ffa5 	bl	10001ee4 <DIGITAL_IO_SetOutputLow>
+                break;
+10001f9a:	e009      	b.n	10001fb0 <main+0x84>
+            case 3:
+                DIGITAL_IO_SetOutputLow(&LED3);
+10001f9c:	4b09      	ldr	r3, [pc, #36]	; (10001fc4 <main+0x98>)
+10001f9e:	1c18      	adds	r0, r3, #0
+10001fa0:	f7ff ffa0 	bl	10001ee4 <DIGITAL_IO_SetOutputLow>
+                break;
+10001fa4:	e004      	b.n	10001fb0 <main+0x84>
+            case 4:
+                DIGITAL_IO_SetOutputLow(&LED4);
+10001fa6:	4b08      	ldr	r3, [pc, #32]	; (10001fc8 <main+0x9c>)
+10001fa8:	1c18      	adds	r0, r3, #0
+10001faa:	f7ff ff9b 	bl	10001ee4 <DIGITAL_IO_SetOutputLow>
+                break;
+10001fae:	46c0      	nop			; (mov r8, r8)
+            default:
+                break;
+        }
+
+
+       delay(1000000);
+10001fb0:	4b06      	ldr	r3, [pc, #24]	; (10001fcc <main+0xa0>)
+10001fb2:	1c18      	adds	r0, r3, #0
+10001fb4:	f7ff ffa6 	bl	10001f04 <delay>
+    }
+10001fb8:	e7bd      	b.n	10001f36 <main+0xa>
+10001fba:	46c0      	nop			; (mov r8, r8)
+10001fbc:	100021dc 	.word	0x100021dc
+10001fc0:	100021ec 	.word	0x100021ec
+10001fc4:	100021fc 	.word	0x100021fc
+10001fc8:	1000220c 	.word	0x1000220c
+10001fcc:	000f4240 	.word	0x000f4240
+
+10001fd0 <__errno>:
+10001fd0:	4b01      	ldr	r3, [pc, #4]	; (10001fd8 <__errno+0x8>)
+10001fd2:	6818      	ldr	r0, [r3, #0]
+10001fd4:	4770      	bx	lr
+10001fd6:	46c0      	nop			; (mov r8, r8)
+10001fd8:	200005b0 	.word	0x200005b0
+
+10001fdc <__libc_init_array>:
+10001fdc:	4b0e      	ldr	r3, [pc, #56]	; (10002018 <__libc_init_array+0x3c>)
+10001fde:	b570      	push	{r4, r5, r6, lr}
+10001fe0:	2500      	movs	r5, #0
+10001fe2:	1c1e      	adds	r6, r3, #0
+10001fe4:	4c0d      	ldr	r4, [pc, #52]	; (1000201c <__libc_init_array+0x40>)
+10001fe6:	1ae4      	subs	r4, r4, r3
+10001fe8:	10a4      	asrs	r4, r4, #2
+10001fea:	42a5      	cmp	r5, r4
+10001fec:	d004      	beq.n	10001ff8 <__libc_init_array+0x1c>
+10001fee:	00ab      	lsls	r3, r5, #2
+10001ff0:	58f3      	ldr	r3, [r6, r3]
+10001ff2:	4798      	blx	r3
+10001ff4:	3501      	adds	r5, #1
+10001ff6:	e7f8      	b.n	10001fea <__libc_init_array+0xe>
+10001ff8:	f7ff fbc4 	bl	10001784 <_init>
+10001ffc:	4b08      	ldr	r3, [pc, #32]	; (10002020 <__libc_init_array+0x44>)
+10001ffe:	2500      	movs	r5, #0
+10002000:	1c1e      	adds	r6, r3, #0
+10002002:	4c08      	ldr	r4, [pc, #32]	; (10002024 <__libc_init_array+0x48>)
+10002004:	1ae4      	subs	r4, r4, r3
+10002006:	10a4      	asrs	r4, r4, #2
+10002008:	42a5      	cmp	r5, r4
+1000200a:	d004      	beq.n	10002016 <__libc_init_array+0x3a>
+1000200c:	00ab      	lsls	r3, r5, #2
+1000200e:	58f3      	ldr	r3, [r6, r3]
+10002010:	4798      	blx	r3
+10002012:	3501      	adds	r5, #1
+10002014:	e7f8      	b.n	10002008 <__libc_init_array+0x2c>
+10002016:	bd70      	pop	{r4, r5, r6, pc}
+10002018:	200005b4 	.word	0x200005b4
+1000201c:	200005b4 	.word	0x200005b4
+10002020:	200005b4 	.word	0x200005b4
+10002024:	200005b4 	.word	0x200005b4
+
+10002028 <rand>:
+10002028:	4b15      	ldr	r3, [pc, #84]	; (10002080 <rand+0x58>)
+1000202a:	b510      	push	{r4, lr}
+1000202c:	681c      	ldr	r4, [r3, #0]
+1000202e:	6ba3      	ldr	r3, [r4, #56]	; 0x38
+10002030:	2b00      	cmp	r3, #0
+10002032:	d115      	bne.n	10002060 <rand+0x38>
+10002034:	2018      	movs	r0, #24
+10002036:	f000 f833 	bl	100020a0 <malloc>
+1000203a:	4b12      	ldr	r3, [pc, #72]	; (10002084 <rand+0x5c>)
+1000203c:	63a0      	str	r0, [r4, #56]	; 0x38
+1000203e:	8003      	strh	r3, [r0, #0]
+10002040:	4b11      	ldr	r3, [pc, #68]	; (10002088 <rand+0x60>)
+10002042:	2201      	movs	r2, #1
+10002044:	8043      	strh	r3, [r0, #2]
+10002046:	4b11      	ldr	r3, [pc, #68]	; (1000208c <rand+0x64>)
+10002048:	8083      	strh	r3, [r0, #4]
+1000204a:	4b11      	ldr	r3, [pc, #68]	; (10002090 <rand+0x68>)
+1000204c:	80c3      	strh	r3, [r0, #6]
+1000204e:	4b11      	ldr	r3, [pc, #68]	; (10002094 <rand+0x6c>)
+10002050:	8103      	strh	r3, [r0, #8]
+10002052:	2305      	movs	r3, #5
+10002054:	8143      	strh	r3, [r0, #10]
+10002056:	3306      	adds	r3, #6
+10002058:	8183      	strh	r3, [r0, #12]
+1000205a:	2300      	movs	r3, #0
+1000205c:	6102      	str	r2, [r0, #16]
+1000205e:	6143      	str	r3, [r0, #20]
+10002060:	6ba4      	ldr	r4, [r4, #56]	; 0x38
+10002062:	4a0d      	ldr	r2, [pc, #52]	; (10002098 <rand+0x70>)
+10002064:	6920      	ldr	r0, [r4, #16]
+10002066:	6961      	ldr	r1, [r4, #20]
+10002068:	4b0c      	ldr	r3, [pc, #48]	; (1000209c <rand+0x74>)
+1000206a:	f000 f88d 	bl	10002188 <__aeabi_lmul>
+1000206e:	2201      	movs	r2, #1
+10002070:	2300      	movs	r3, #0
+10002072:	1880      	adds	r0, r0, r2
+10002074:	4159      	adcs	r1, r3
+10002076:	6120      	str	r0, [r4, #16]
+10002078:	6161      	str	r1, [r4, #20]
+1000207a:	0048      	lsls	r0, r1, #1
+1000207c:	0840      	lsrs	r0, r0, #1
+1000207e:	bd10      	pop	{r4, pc}
+10002080:	200005b0 	.word	0x200005b0
+10002084:	0000330e 	.word	0x0000330e
+10002088:	ffffabcd 	.word	0xffffabcd
+1000208c:	00001234 	.word	0x00001234
+10002090:	ffffe66d 	.word	0xffffe66d
+10002094:	ffffdeec 	.word	0xffffdeec
+10002098:	4c957f2d 	.word	0x4c957f2d
+1000209c:	5851f42d 	.word	0x5851f42d
+
+100020a0 <malloc>:
+100020a0:	b508      	push	{r3, lr}
+100020a2:	4b03      	ldr	r3, [pc, #12]	; (100020b0 <malloc+0x10>)
+100020a4:	1c01      	adds	r1, r0, #0
+100020a6:	6818      	ldr	r0, [r3, #0]
+100020a8:	f000 f804 	bl	100020b4 <_malloc_r>
+100020ac:	bd08      	pop	{r3, pc}
+100020ae:	46c0      	nop			; (mov r8, r8)
+100020b0:	200005b0 	.word	0x200005b0
+
+100020b4 <_malloc_r>:
+100020b4:	2303      	movs	r3, #3
+100020b6:	b570      	push	{r4, r5, r6, lr}
+100020b8:	1ccc      	adds	r4, r1, #3
+100020ba:	439c      	bics	r4, r3
+100020bc:	3408      	adds	r4, #8
+100020be:	1c05      	adds	r5, r0, #0
+100020c0:	2c0c      	cmp	r4, #12
+100020c2:	d201      	bcs.n	100020c8 <_malloc_r+0x14>
+100020c4:	240c      	movs	r4, #12
+100020c6:	e005      	b.n	100020d4 <_malloc_r+0x20>
+100020c8:	2c00      	cmp	r4, #0
+100020ca:	da03      	bge.n	100020d4 <_malloc_r+0x20>
+100020cc:	230c      	movs	r3, #12
+100020ce:	2000      	movs	r0, #0
+100020d0:	602b      	str	r3, [r5, #0]
+100020d2:	e042      	b.n	1000215a <_malloc_r+0xa6>
+100020d4:	428c      	cmp	r4, r1
+100020d6:	d3f9      	bcc.n	100020cc <_malloc_r+0x18>
+100020d8:	4a20      	ldr	r2, [pc, #128]	; (1000215c <_malloc_r+0xa8>)
+100020da:	6813      	ldr	r3, [r2, #0]
+100020dc:	1c10      	adds	r0, r2, #0
+100020de:	1c19      	adds	r1, r3, #0
+100020e0:	2900      	cmp	r1, #0
+100020e2:	d013      	beq.n	1000210c <_malloc_r+0x58>
+100020e4:	680a      	ldr	r2, [r1, #0]
+100020e6:	1b12      	subs	r2, r2, r4
+100020e8:	d40d      	bmi.n	10002106 <_malloc_r+0x52>
+100020ea:	2a0b      	cmp	r2, #11
+100020ec:	d902      	bls.n	100020f4 <_malloc_r+0x40>
+100020ee:	600a      	str	r2, [r1, #0]
+100020f0:	188b      	adds	r3, r1, r2
+100020f2:	e01f      	b.n	10002134 <_malloc_r+0x80>
+100020f4:	428b      	cmp	r3, r1
+100020f6:	d102      	bne.n	100020fe <_malloc_r+0x4a>
+100020f8:	685a      	ldr	r2, [r3, #4]
+100020fa:	6002      	str	r2, [r0, #0]
+100020fc:	e01b      	b.n	10002136 <_malloc_r+0x82>
+100020fe:	684a      	ldr	r2, [r1, #4]
+10002100:	605a      	str	r2, [r3, #4]
+10002102:	1c0b      	adds	r3, r1, #0
+10002104:	e017      	b.n	10002136 <_malloc_r+0x82>
+10002106:	1c0b      	adds	r3, r1, #0
+10002108:	6849      	ldr	r1, [r1, #4]
+1000210a:	e7e9      	b.n	100020e0 <_malloc_r+0x2c>
+1000210c:	4e14      	ldr	r6, [pc, #80]	; (10002160 <_malloc_r+0xac>)
+1000210e:	6833      	ldr	r3, [r6, #0]
+10002110:	2b00      	cmp	r3, #0
+10002112:	d103      	bne.n	1000211c <_malloc_r+0x68>
+10002114:	1c28      	adds	r0, r5, #0
+10002116:	f000 f825 	bl	10002164 <_sbrk_r>
+1000211a:	6030      	str	r0, [r6, #0]
+1000211c:	1c28      	adds	r0, r5, #0
+1000211e:	1c21      	adds	r1, r4, #0
+10002120:	f000 f820 	bl	10002164 <_sbrk_r>
+10002124:	1c03      	adds	r3, r0, #0
+10002126:	1c42      	adds	r2, r0, #1
+10002128:	d0d0      	beq.n	100020cc <_malloc_r+0x18>
+1000212a:	2203      	movs	r2, #3
+1000212c:	1cc6      	adds	r6, r0, #3
+1000212e:	4396      	bics	r6, r2
+10002130:	4286      	cmp	r6, r0
+10002132:	d10a      	bne.n	1000214a <_malloc_r+0x96>
+10002134:	601c      	str	r4, [r3, #0]
+10002136:	1c18      	adds	r0, r3, #0
+10002138:	2107      	movs	r1, #7
+1000213a:	300b      	adds	r0, #11
+1000213c:	1d1a      	adds	r2, r3, #4
+1000213e:	4388      	bics	r0, r1
+10002140:	1a82      	subs	r2, r0, r2
+10002142:	d00a      	beq.n	1000215a <_malloc_r+0xa6>
+10002144:	4251      	negs	r1, r2
+10002146:	5099      	str	r1, [r3, r2]
+10002148:	e007      	b.n	1000215a <_malloc_r+0xa6>
+1000214a:	1a31      	subs	r1, r6, r0
+1000214c:	1c28      	adds	r0, r5, #0
+1000214e:	f000 f809 	bl	10002164 <_sbrk_r>
+10002152:	1c43      	adds	r3, r0, #1
+10002154:	d0ba      	beq.n	100020cc <_malloc_r+0x18>
+10002156:	1c33      	adds	r3, r6, #0
+10002158:	e7ec      	b.n	10002134 <_malloc_r+0x80>
+1000215a:	bd70      	pop	{r4, r5, r6, pc}
+1000215c:	200005d8 	.word	0x200005d8
+10002160:	200005d4 	.word	0x200005d4
+
+10002164 <_sbrk_r>:
+10002164:	b538      	push	{r3, r4, r5, lr}
+10002166:	2300      	movs	r3, #0
+10002168:	4c06      	ldr	r4, [pc, #24]	; (10002184 <_sbrk_r+0x20>)
+1000216a:	1c05      	adds	r5, r0, #0
+1000216c:	1c08      	adds	r0, r1, #0
+1000216e:	6023      	str	r3, [r4, #0]
+10002170:	f7ff fad4 	bl	1000171c <_sbrk>
+10002174:	1c43      	adds	r3, r0, #1
+10002176:	d103      	bne.n	10002180 <_sbrk_r+0x1c>
+10002178:	6823      	ldr	r3, [r4, #0]
+1000217a:	2b00      	cmp	r3, #0
+1000217c:	d000      	beq.n	10002180 <_sbrk_r+0x1c>
+1000217e:	602b      	str	r3, [r5, #0]
+10002180:	bd38      	pop	{r3, r4, r5, pc}
+10002182:	46c0      	nop			; (mov r8, r8)
+10002184:	200006fc 	.word	0x200006fc
+
+10002188 <__aeabi_lmul>:
+10002188:	b5f0      	push	{r4, r5, r6, r7, lr}
+1000218a:	464f      	mov	r7, r9
+1000218c:	4646      	mov	r6, r8
+1000218e:	0405      	lsls	r5, r0, #16
+10002190:	0c2d      	lsrs	r5, r5, #16
+10002192:	1c2c      	adds	r4, r5, #0
+10002194:	b4c0      	push	{r6, r7}
+10002196:	0417      	lsls	r7, r2, #16
+10002198:	0c16      	lsrs	r6, r2, #16
+1000219a:	0c3f      	lsrs	r7, r7, #16
+1000219c:	4699      	mov	r9, r3
+1000219e:	0c03      	lsrs	r3, r0, #16
+100021a0:	437c      	muls	r4, r7
+100021a2:	4375      	muls	r5, r6
+100021a4:	435f      	muls	r7, r3
+100021a6:	4373      	muls	r3, r6
+100021a8:	197d      	adds	r5, r7, r5
+100021aa:	0c26      	lsrs	r6, r4, #16
+100021ac:	19ad      	adds	r5, r5, r6
+100021ae:	469c      	mov	ip, r3
+100021b0:	42af      	cmp	r7, r5
+100021b2:	d903      	bls.n	100021bc <__aeabi_lmul+0x34>
+100021b4:	2380      	movs	r3, #128	; 0x80
+100021b6:	025b      	lsls	r3, r3, #9
+100021b8:	4698      	mov	r8, r3
+100021ba:	44c4      	add	ip, r8
+100021bc:	464b      	mov	r3, r9
+100021be:	4351      	muls	r1, r2
+100021c0:	4343      	muls	r3, r0
+100021c2:	0424      	lsls	r4, r4, #16
+100021c4:	0c2e      	lsrs	r6, r5, #16
+100021c6:	0c24      	lsrs	r4, r4, #16
+100021c8:	042d      	lsls	r5, r5, #16
+100021ca:	4466      	add	r6, ip
+100021cc:	192c      	adds	r4, r5, r4
+100021ce:	1859      	adds	r1, r3, r1
+100021d0:	1989      	adds	r1, r1, r6
+100021d2:	1c20      	adds	r0, r4, #0
+100021d4:	bc0c      	pop	{r2, r3}
+100021d6:	4690      	mov	r8, r2
+100021d8:	4699      	mov	r9, r3
+100021da:	bdf0      	pop	{r4, r5, r6, r7, pc}
+
+100021dc <LED1>:
+100021dc:	0400 4004 0080 0000 0001 0000 0000 0000     ...@............
+
+100021ec <LED2>:
+100021ec:	0400 4004 0080 0000 0000 0001 0001 0000     ...@............
+
+100021fc <LED3>:
+100021fc:	0400 4004 0080 0000 0001 0000 0002 0000     ...@............
+
+1000220c <LED4>:
+1000220c:	0400 4004 0080 0000 0001 0000 0003 0000     ...@............
+1000221c:	0000 0001 0000 0330 0000 0001 0000 0000     ......0.........
+1000222c:	0043 0000                                   C...
+
+Disassembly of section .VENEER_Code:
+
+2000000c <HardFault_Veener>:
+/* ==================VENEERS VENEERS VENEERS VENEERS VENEERS=============== */
+    .section ".XmcVeneerCode","ax",%progbits
+    
+    .align 1
+    
+	Insert_InterruptVeener HardFault
+2000000c:	482c      	ldr	r0, [pc, #176]	; (200000c0 <IRQ31_Veener+0x4>)
+2000000e:	4700      	bx	r0
+	...
+
+2000002c <SVC_Veener>:
+    .long 0
+    .long 0
+    .long 0
+    .long 0
+    .long 0
+	Insert_InterruptVeener SVC
+2000002c:	4825      	ldr	r0, [pc, #148]	; (200000c4 <IRQ31_Veener+0x8>)
+2000002e:	4700      	bx	r0
+	...
+
+20000038 <PendSV_Veener>:
+    .long 0
+    .long 0
+	Insert_InterruptVeener PendSV	
+20000038:	4823      	ldr	r0, [pc, #140]	; (200000c8 <IRQ31_Veener+0xc>)
+2000003a:	4700      	bx	r0
+
+2000003c <SysTick_Veener>:
+	Insert_InterruptVeener SysTick
+2000003c:	4823      	ldr	r0, [pc, #140]	; (200000cc <IRQ31_Veener+0x10>)
+2000003e:	4700      	bx	r0
+
+20000040 <IRQ0_Veener>:
+	
+	Insert_InterruptVeener IRQ0	
+20000040:	4823      	ldr	r0, [pc, #140]	; (200000d0 <IRQ31_Veener+0x14>)
+20000042:	4700      	bx	r0
+
+20000044 <IRQ1_Veener>:
+	Insert_InterruptVeener IRQ1	
+20000044:	4823      	ldr	r0, [pc, #140]	; (200000d4 <IRQ31_Veener+0x18>)
+20000046:	4700      	bx	r0
+
+20000048 <IRQ2_Veener>:
+	Insert_InterruptVeener IRQ2	
+20000048:	4823      	ldr	r0, [pc, #140]	; (200000d8 <IRQ31_Veener+0x1c>)
+2000004a:	4700      	bx	r0
+
+2000004c <IRQ3_Veener>:
+	Insert_InterruptVeener IRQ3	
+2000004c:	4823      	ldr	r0, [pc, #140]	; (200000dc <IRQ31_Veener+0x20>)
+2000004e:	4700      	bx	r0
+
+20000050 <IRQ4_Veener>:
+	Insert_InterruptVeener IRQ4	
+20000050:	4823      	ldr	r0, [pc, #140]	; (200000e0 <IRQ31_Veener+0x24>)
+20000052:	4700      	bx	r0
+
+20000054 <IRQ5_Veener>:
+	Insert_InterruptVeener IRQ5	
+20000054:	4823      	ldr	r0, [pc, #140]	; (200000e4 <IRQ31_Veener+0x28>)
+20000056:	4700      	bx	r0
+
+20000058 <IRQ6_Veener>:
+	Insert_InterruptVeener IRQ6	
+20000058:	4823      	ldr	r0, [pc, #140]	; (200000e8 <IRQ31_Veener+0x2c>)
+2000005a:	4700      	bx	r0
+
+2000005c <IRQ7_Veener>:
+	Insert_InterruptVeener IRQ7	
+2000005c:	4823      	ldr	r0, [pc, #140]	; (200000ec <IRQ31_Veener+0x30>)
+2000005e:	4700      	bx	r0
+
+20000060 <IRQ8_Veener>:
+	Insert_InterruptVeener IRQ8	
+20000060:	4823      	ldr	r0, [pc, #140]	; (200000f0 <IRQ31_Veener+0x34>)
+20000062:	4700      	bx	r0
+
+20000064 <IRQ9_Veener>:
+	Insert_InterruptVeener IRQ9	
+20000064:	4823      	ldr	r0, [pc, #140]	; (200000f4 <IRQ31_Veener+0x38>)
+20000066:	4700      	bx	r0
+
+20000068 <IRQ10_Veener>:
+	Insert_InterruptVeener IRQ10	
+20000068:	4823      	ldr	r0, [pc, #140]	; (200000f8 <IRQ31_Veener+0x3c>)
+2000006a:	4700      	bx	r0
+
+2000006c <IRQ11_Veener>:
+	Insert_InterruptVeener IRQ11	
+2000006c:	4823      	ldr	r0, [pc, #140]	; (200000fc <IRQ31_Veener+0x40>)
+2000006e:	4700      	bx	r0
+
+20000070 <IRQ12_Veener>:
+	Insert_InterruptVeener IRQ12	
+20000070:	4823      	ldr	r0, [pc, #140]	; (20000100 <IRQ31_Veener+0x44>)
+20000072:	4700      	bx	r0
+
+20000074 <IRQ13_Veener>:
+	Insert_InterruptVeener IRQ13	
+20000074:	4823      	ldr	r0, [pc, #140]	; (20000104 <IRQ31_Veener+0x48>)
+20000076:	4700      	bx	r0
+
+20000078 <IRQ14_Veener>:
+	Insert_InterruptVeener IRQ14	
+20000078:	4823      	ldr	r0, [pc, #140]	; (20000108 <IRQ31_Veener+0x4c>)
+2000007a:	4700      	bx	r0
+
+2000007c <IRQ15_Veener>:
+	Insert_InterruptVeener IRQ15	
+2000007c:	4823      	ldr	r0, [pc, #140]	; (2000010c <IRQ31_Veener+0x50>)
+2000007e:	4700      	bx	r0
+
+20000080 <IRQ16_Veener>:
+	Insert_InterruptVeener IRQ16	
+20000080:	4823      	ldr	r0, [pc, #140]	; (20000110 <IRQ31_Veener+0x54>)
+20000082:	4700      	bx	r0
+
+20000084 <IRQ17_Veener>:
+	Insert_InterruptVeener IRQ17	
+20000084:	4823      	ldr	r0, [pc, #140]	; (20000114 <IRQ31_Veener+0x58>)
+20000086:	4700      	bx	r0
+
+20000088 <IRQ18_Veener>:
+	Insert_InterruptVeener IRQ18	
+20000088:	4823      	ldr	r0, [pc, #140]	; (20000118 <IRQ31_Veener+0x5c>)
+2000008a:	4700      	bx	r0
+
+2000008c <IRQ19_Veener>:
+	Insert_InterruptVeener IRQ19	
+2000008c:	4823      	ldr	r0, [pc, #140]	; (2000011c <IRQ31_Veener+0x60>)
+2000008e:	4700      	bx	r0
+
+20000090 <IRQ20_Veener>:
+	Insert_InterruptVeener IRQ20
+20000090:	4823      	ldr	r0, [pc, #140]	; (20000120 <IRQ31_Veener+0x64>)
+20000092:	4700      	bx	r0
+
+20000094 <IRQ21_Veener>:
+	Insert_InterruptVeener IRQ21
+20000094:	4823      	ldr	r0, [pc, #140]	; (20000124 <IRQ31_Veener+0x68>)
+20000096:	4700      	bx	r0
+
+20000098 <IRQ22_Veener>:
+	Insert_InterruptVeener IRQ22	
+20000098:	4823      	ldr	r0, [pc, #140]	; (20000128 <IRQ31_Veener+0x6c>)
+2000009a:	4700      	bx	r0
+
+2000009c <IRQ23_Veener>:
+	Insert_InterruptVeener IRQ23	
+2000009c:	4823      	ldr	r0, [pc, #140]	; (2000012c <IRQ31_Veener+0x70>)
+2000009e:	4700      	bx	r0
+
+200000a0 <IRQ24_Veener>:
+	Insert_InterruptVeener IRQ24	
+200000a0:	4823      	ldr	r0, [pc, #140]	; (20000130 <IRQ31_Veener+0x74>)
+200000a2:	4700      	bx	r0
+
+200000a4 <IRQ25_Veener>:
+	Insert_InterruptVeener IRQ25	
+200000a4:	4823      	ldr	r0, [pc, #140]	; (20000134 <IRQ31_Veener+0x78>)
+200000a6:	4700      	bx	r0
+
+200000a8 <IRQ26_Veener>:
+	Insert_InterruptVeener IRQ26	
+200000a8:	4823      	ldr	r0, [pc, #140]	; (20000138 <IRQ31_Veener+0x7c>)
+200000aa:	4700      	bx	r0
+
+200000ac <IRQ27_Veener>:
+	Insert_InterruptVeener IRQ27	
+200000ac:	4823      	ldr	r0, [pc, #140]	; (2000013c <IRQ31_Veener+0x80>)
+200000ae:	4700      	bx	r0
+
+200000b0 <IRQ28_Veener>:
+	Insert_InterruptVeener IRQ28	
+200000b0:	4823      	ldr	r0, [pc, #140]	; (20000140 <IRQ31_Veener+0x84>)
+200000b2:	4700      	bx	r0
+
+200000b4 <IRQ29_Veener>:
+	Insert_InterruptVeener IRQ29	
+200000b4:	4823      	ldr	r0, [pc, #140]	; (20000144 <IRQ31_Veener+0x88>)
+200000b6:	4700      	bx	r0
+
+200000b8 <IRQ30_Veener>:
+	Insert_InterruptVeener IRQ30	
+200000b8:	4823      	ldr	r0, [pc, #140]	; (20000148 <IRQ31_Veener+0x8c>)
+200000ba:	4700      	bx	r0
+
+200000bc <IRQ31_Veener>:
+	Insert_InterruptVeener IRQ31	
+200000bc:	4823      	ldr	r0, [pc, #140]	; (2000014c <IRQ31_Veener+0x90>)
+200000be:	4700      	bx	r0
+/* ==================VENEERS VENEERS VENEERS VENEERS VENEERS=============== */
+    .section ".XmcVeneerCode","ax",%progbits
+    
+    .align 1
+    
+	Insert_InterruptVeener HardFault
+200000c0:	1000109d 	.word	0x1000109d
+    .long 0
+    .long 0
+    .long 0
+    .long 0
+    .long 0
+	Insert_InterruptVeener SVC
+200000c4:	1000109d 	.word	0x1000109d
+    .long 0
+    .long 0
+	Insert_InterruptVeener PendSV	
+200000c8:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener SysTick
+200000cc:	10001bf9 	.word	0x10001bf9
+	
+	Insert_InterruptVeener IRQ0	
+200000d0:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ1	
+200000d4:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ2	
+200000d8:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ3	
+200000dc:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ4	
+200000e0:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ5	
+200000e4:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ6	
+200000e8:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ7	
+200000ec:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ8	
+200000f0:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ9	
+200000f4:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ10	
+200000f8:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ11	
+200000fc:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ12	
+20000100:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ13	
+20000104:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ14	
+20000108:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ15	
+2000010c:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ16	
+20000110:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ17	
+20000114:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ18	
+20000118:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ19	
+2000011c:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ20
+20000120:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ21
+20000124:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ22	
+20000128:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ23	
+2000012c:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ24	
+20000130:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ25	
+20000134:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ26	
+20000138:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ27	
+2000013c:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ28	
+20000140:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ29	
+20000144:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ30	
+20000148:	1000109d 	.word	0x1000109d
+	Insert_InterruptVeener IRQ31	
+2000014c:	1000109d 	.word	0x1000109d
