@@ -8,7 +8,7 @@ The Digital Dice Simulator is a project based on a microcontroller that imitates
 
 ## Components
 
- Microcontroller (e.g., XMC1400)
+ XMC1400
  4 LEDs
  Power Supply
 
