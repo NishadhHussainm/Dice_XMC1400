@@ -44,19 +44,6 @@ The result of each simulated dice roll will be displayed by the LEDs.
  Explore different LED patterns to enhance the display.
  Implement power saving modes to extend battery life.
 
-## Housing (If desired)
-
- Consider designing or selecting a casing for your project.
-
-## Known Limitations
-
- Please document any known issues or constraints.
-
-## Credits
-
- Give credit to any libraries, tools or resources that were used in the project.
-
-
 ## Author
 
 Nishadh Hussain 
