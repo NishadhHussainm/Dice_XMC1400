@@ -4,7 +4,7 @@
 
 The Digital Dice Simulator is a project based on a microcontroller that imitates the rolling of a dice using 4 LEDs to show the outcome. This project serves a purpose. Aims to provide an enjoyable introduction, to microcontroller programming.
 
-![Dice Simulator](dice_simulator.jpg)
+
 
 ## Components
 
@@ -56,9 +56,6 @@ The result of each simulated dice roll will be displayed by the LEDs.
 
  Give credit to any libraries, tools or resources that were used in the project.
 
-## License
-
-This project is covered by the [MIT License](LICENSE).
 
 ## Author
 
